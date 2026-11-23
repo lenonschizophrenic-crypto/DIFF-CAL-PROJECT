@@ -124,6 +124,35 @@ body.mobile #title button {
   min-width: 0;
 }
 
+#devWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#devArrow {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.35em;
+  line-height: 1;
+  color: #ffd27a;
+  text-shadow: 0 0 10px #ff7eb6, 0 2px 4px rgba(0, 0, 0, .75);
+  pointer-events: none;
+  animation: devBounce .85s ease-in-out infinite;
+}
+
+@keyframes devBounce {
+  0%, 100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, -8px);
+  }
+}
+
 #dlg {
   left: 3%;
   right: 3%;
