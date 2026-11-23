@@ -317,8 +317,8 @@ body.mobile #bhint {
 #profBadge {
   position: absolute;
   top: 14%;
-  left: auto;
-  right: 2%;
+  left: auto;      
+  right: 2%;       
   z-index: 8;
   background: rgba(20, 12, 40, .84);
   color: #fff;
