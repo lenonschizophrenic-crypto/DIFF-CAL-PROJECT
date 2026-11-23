@@ -952,14 +952,14 @@ function applyDevice(toggleScreen) {
   $("ans").setAttribute("inputmode", mode == "mobile" ? "none" : "text");
   (mode == "mobile" ? $("bl") : $("arow")).appendChild($("go"));
 
+  $("devWrap").hidden = false;
+  $("devMenu").hidden = true;
   if (sel == "select") {
-    $("devWrap").hidden = false;
     $("devT").textContent = "DEVICE : ( select )";
     $("devArrow").hidden = false;
-    $("devMenu").hidden = true;
   } else {
-    $("devWrap").hidden = true;
-    $("devMenu").hidden = true;
+    $("devT").textContent = "DEVICE : " + (sel == "mobile" ? "Mobile" : "PC");
+    $("devArrow").hidden = true;
     if (toggleScreen) {
       if (sel == "mobile") enterMobileScreen();
       else exitMobileScreen();
@@ -970,7 +970,9 @@ function applyDevice(toggleScreen) {
 
 $("devT").onclick = () => {
   $("devMenu").hidden = !$("devMenu").hidden;
-  $("devArrow").hidden = !$("devMenu").hidden;
+  if ((save.dev || "select") == "select") {
+    $("devArrow").hidden = !$("devMenu").hidden;
+  }
 };
 
 $("pickPC").onclick = () => {
