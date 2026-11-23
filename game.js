@@ -85,6 +85,7 @@ $("exitAcc").onclick = () => {
   $("dlg").hidden = true; $("battle").hidden = true; $("shop").hidden = true; $("end").hidden = true; $("shopS").hidden = true; $("askFight").hidden = true; $("title").hidden = true;
   activeUser = ""; pendingUser = ""; save = {};
   updateProfileUI();
+  applyDevice();
   $("nameIn").value = "";
   $("loginMsg").textContent = "";
   $("loginStep1").hidden = false;
@@ -909,11 +910,27 @@ function loop(now) {
 }
 
 /* ---------- device & screen ---------- */
-let mode = null, devSel = "pc", ignoreRot = false, rotPaused = false;
-function detectDevice() {
-  const ua = navigator.userAgent || "", t = matchMedia("(pointer:coarse)").matches || navigator.maxTouchPoints > 1, small = Math.min(screen.width, screen.height) < 760;
-  return (/Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (t && small) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) ? "mobile" : "pc";
+let mode = "pc", ignoreRot = false, rotPaused = false;
+
+function enterMobileScreen() {
+  try {
+    const r = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+    if (r && r.then) {
+      r.then(() => {
+        try { screen.orientation.lock("landscape").catch(() => {}); } catch (e) {}
+      }).catch(() => {});
+    }
+  } catch (e) {}
 }
+
+function exitMobileScreen() {
+  try {
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  } catch (e) {}
+}
+
 function resize() {
   const b = document.body, cs = getComputedStyle(b), mob = mode == "mobile";
   const vw = b.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
@@ -925,26 +942,42 @@ function resize() {
   const portrait = mob && b.clientHeight > b.clientWidth && !ignoreRot; $("rotate").hidden = !portrait;
   if (portrait && S == "play" && !paused) { setPause(true); rotPaused = true; } else if (!portrait && rotPaused) { setPause(false); rotPaused = false; }
 }
-function applyDevice() {
-  const o = save.dev || "auto"; mode = o == "auto" ? detectDevice() : o;
-  document.body.classList.remove("pc", "mobile"); document.body.classList.add(mode);
-  $("qk").hidden = mode != "mobile"; $("ans").setAttribute("inputmode", mode == "mobile" ? "none" : "text");
+
+function applyDevice(toggleScreen) {
+  const sel = save.dev || "select";
+  mode = sel == "mobile" ? "mobile" : "pc";
+  document.body.classList.remove("pc", "mobile");
+  document.body.classList.add(mode);
+  $("qk").hidden = mode != "mobile";
+  $("ans").setAttribute("inputmode", mode == "mobile" ? "none" : "text");
   (mode == "mobile" ? $("bl") : $("arow")).appendChild($("go"));
-  $("devT").textContent = "Device: " + (o == "auto" ? "Auto · " : "") + (mode == "mobile" ? "Phone" : "PC"); resize();
+
+  if (sel == "select") {
+    $("devT").textContent = "DEVICE : ( select )";
+    $("devArrow").hidden = false;
+  } else if (sel == "pc") {
+    $("devT").textContent = "DEVICE : PC";
+    $("devArrow").hidden = true;
+    if (toggleScreen) exitMobileScreen();
+  } else {
+    $("devT").textContent = "DEVICE : Mobile";
+    $("devArrow").hidden = true;
+    if (toggleScreen) enterMobileScreen();
+  }
+  resize();
 }
-$("devT").onclick = () => { const c = ["auto", "pc", "mobile"]; save.dev = c[(c.indexOf(save.dev || "auto") + 1) % 3]; store(); applyDevice(); };
-let fsTried = false;
-addEventListener("pointerdown", () => {
-  if (fsTried || mode != "mobile") return; fsTried = true;
-  try {
-    const r = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
-    if (r && r.then) r.then(() => { try { screen.orientation.lock("landscape").catch(() => {}); } catch (e) {} }).catch(() => {});
-  } catch (e) {}
-});
+
+$("devT").onclick = () => {
+  const curSel = save.dev || "select";
+  save.dev = curSel == "pc" ? "mobile" : "pc";
+  store();
+  applyDevice(true);
+};
+
 $("rotok").onclick = () => { ignoreRot = true; resize(); };
 wrap.addEventListener("contextmenu", e => e.preventDefault());
 addEventListener("resize", resize); addEventListener("orientationchange", () => setTimeout(resize, 250)); document.addEventListener("fullscreenchange", () => setTimeout(resize, 150));
 if (window.visualViewport) visualViewport.addEventListener("resize", resize);
-applyDevice();
+applyDevice(false);
 setTimeout(() => $("nameIn").focus(), 50);
 requestAnimationFrame(loop);
