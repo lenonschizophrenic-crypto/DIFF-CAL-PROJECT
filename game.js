@@ -34,7 +34,7 @@ function loginSuccess(key, data) {
   save = data;
   P.coins = save.coins || 0;
   store();
-  applyDevice();
+  applyDevice(false);
   $("loginBox").hidden = true;
   $("title").hidden = false;
   $("cont").hidden = save.bx == null;
@@ -85,7 +85,7 @@ $("exitAcc").onclick = () => {
   $("dlg").hidden = true; $("battle").hidden = true; $("shop").hidden = true; $("end").hidden = true; $("shopS").hidden = true; $("askFight").hidden = true; $("title").hidden = true;
   activeUser = ""; pendingUser = ""; save = {};
   updateProfileUI();
-  applyDevice();
+  applyDevice(false);
   $("nameIn").value = "";
   $("loginMsg").textContent = "";
   $("loginStep1").hidden = false;
@@ -953,23 +953,34 @@ function applyDevice(toggleScreen) {
   (mode == "mobile" ? $("bl") : $("arow")).appendChild($("go"));
 
   if (sel == "select") {
+    $("devWrap").hidden = false;
     $("devT").textContent = "DEVICE : ( select )";
     $("devArrow").hidden = false;
-  } else if (sel == "pc") {
-    $("devT").textContent = "DEVICE : PC";
-    $("devArrow").hidden = true;
-    if (toggleScreen) exitMobileScreen();
+    $("devMenu").hidden = true;
   } else {
-    $("devT").textContent = "DEVICE : Mobile";
-    $("devArrow").hidden = true;
-    if (toggleScreen) enterMobileScreen();
+    $("devWrap").hidden = true;
+    $("devMenu").hidden = true;
+    if (toggleScreen) {
+      if (sel == "mobile") enterMobileScreen();
+      else exitMobileScreen();
+    }
   }
   resize();
 }
 
 $("devT").onclick = () => {
-  const curSel = save.dev || "select";
-  save.dev = curSel == "pc" ? "mobile" : "pc";
+  $("devMenu").hidden = !$("devMenu").hidden;
+  $("devArrow").hidden = !$("devMenu").hidden;
+};
+
+$("pickPC").onclick = () => {
+  save.dev = "pc";
+  store();
+  applyDevice(true);
+};
+
+$("pickMob").onclick = () => {
+  save.dev = "mobile";
   store();
   applyDevice(true);
 };
