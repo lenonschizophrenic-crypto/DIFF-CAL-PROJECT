@@ -252,7 +252,7 @@ function load(wi, fs) {
   plats.forEach(p => { for (let k = 0; k < 3; k++) coins.push({ x: p.x + 20 + k * 35, y: p.y - 24 }); });
   const n = rnd(2, 3), xs = [900, 1650, 2300].slice(0, n).map(x => x + rnd(-80, 120));
   enemies = xs.map(x => { const k = pick(w.pool); return { x, k, t: rnd(w.mt[0], w.mt[1]), q: 3, n: NM[k], taunt: TA[k], ph: Math.random() * 6, skip: false }; });
-  enemies.push({ x: 3000, boss: 1, q: w.boss.hp, ph: 0, ...w.boss });
+  enemies.push({ x: 3000, boss: 1, q: w.boss.hp, ph: 0, skip: false, ...w.boss });
   const cont = fs && save.bx != null;
   enemies.forEach(e => e.dead = e.boss ? !!(fs && save.bd) : !!cont);
   trig = (wi == 0 ? TRIG : [{ x: 0, lines: w.in }]).map(t => ({ ...t, done: (wi == 0 && !!save.tut) || (fs && t.x < P.x) }));
@@ -285,6 +285,18 @@ function promptFight(e) {
   S = "ask";
   keys.left = keys.right = keys.jump = 0;
   $("askTitle").textContent = e.n;
+  const msgEl = $("askFight").querySelector("p");
+  if (e.boss) {
+    msgEl.textContent = WI < 4
+      ? "Fight Boss and Defeat to go to Chapter " + (WI + 2) + "?"
+      : "Fight Final Boss and Defeat to restore the magic?";
+    $("fightYes").textContent = "Yes, Fight Boss!";
+    $("fightNo").textContent = "Not Yet";
+  } else {
+    msgEl.textContent = "Fight monster to earn knowledge and more coins at the same time?";
+    $("fightYes").textContent = "Yes, Fight!";
+    $("fightNo").textContent = "No, Keep Farming";
+  }
   $("askFight").hidden = false;
   SFX.blip();
 }
@@ -295,7 +307,10 @@ $("fightYes").onclick = () => {
 };
 $("fightNo").onclick = () => {
   $("askFight").hidden = true;
-  if (candE) candE.skip = true;
+  if (candE) {
+    candE.skip = true;
+    if (candE.boss) P.x = Math.min(P.x, candE.x - 105);
+  }
   candE = null;
   S = "play";
 };
@@ -508,8 +523,7 @@ function update() {
     const dist = Math.abs(P.x - e.x);
     if (e.skip && dist > 120) e.skip = false;
     if (!e.skip && invuln <= 0 && dist < (e.boss ? 85 : 55) && (e.boss || P.y + P.h > GY - 70)) {
-      if (e.boss) startBattle(e);
-      else promptFight(e);
+      promptFight(e);
       return;
     }
   }
@@ -529,6 +543,7 @@ function update() {
 function glow(c, b) { X.shadowColor = c; X.shadowBlur = b * K; }
 function monica(x, y, f, o) {
   o = o || {}; const ck = cur(), ab = ck.ab, sit = o.sit, mv = S == "play" && P.on && Math.abs(P.vx) > .1, air = S == "play" && !P.on, st = mv ? Math.sin(tt / 4) * 4 : 0, w = Math.sin(tt / 18) * .12, s = o.s || 1, c = o.cast || 0;
+  const fur = "#ffffff", furOut = "#3b2a5e", earIn = "#ffb6d9";
   X.save(); if (invuln > 0 && Math.floor(invuln / 6) % 2) X.globalAlpha = .45; X.translate(x + 14, y + 40); X.scale(f * s, s);
   if (ab == "wings") {
     glow("#fff6b0", 14); X.fillStyle = "rgba(255,248,210,.92)";
@@ -542,35 +557,50 @@ function monica(x, y, f, o) {
   const bk = sit ? 3 : 6 + (mv ? 7 + Math.sin(tt / 4) * 3 : 0) + (air ? (P.vy > 0 ? 11 : 5) : 0) + (ab == "float" ? 5 : 0), lf = air ? (P.vy > 0 ? -Math.min(14, P.vy * 2) : 4) : 0, k = mv || air ? 4 : 1.5, s1 = Math.sin(tt / 5) * k, s2 = Math.sin(tt / 5 + 1.5) * k;
   glow(ck.c, 8); X.fillStyle = ck.c; X.beginPath(); X.moveTo(4, -26); X.quadraticCurveTo(-6 - bk * .5, -16, -12 - bk, -3 + lf + s1); X.lineTo(-6 - bk * .55, 3 + lf * .6 + s2); X.lineTo(-1 - bk * .2, -2 + s1 * .5); X.lineTo(6, -8); X.closePath(); X.fill();
   X.strokeStyle = ck.t; X.lineWidth = 1.5; X.beginPath(); X.moveTo(-12 - bk, -3 + lf + s1); X.lineTo(-6 - bk * .55, 3 + lf * .6 + s2); X.lineTo(-1 - bk * .2, -2 + s1 * .5); X.stroke();
-  glow("#b58cff", 14); X.fillStyle = "#17131f"; X.beginPath(); X.arc(-15, -8, 5, 0, 7); X.fill();
+
+  glow("#e6d8ff", 14); X.fillStyle = fur; X.strokeStyle = furOut; X.lineWidth = 1.6;
+  X.beginPath(); X.arc(-15, -8, 5, 0, 7); X.fill(); X.stroke();
+
   [[-4, -.15], [8, .15]].forEach(([ex, r]) => {
-    X.save(); X.translate(ex, -40); X.rotate(r + w); X.beginPath(); X.ellipse(0, -12, 5, 15, 0, 0, 7); X.fill();
-    glow("#8a5cff", 10); X.fillStyle = "#7a4fe0"; X.beginPath(); X.ellipse(0, -11, 2, 10, 0, 0, 7); X.fill();
-    glow("#b58cff", 14); X.fillStyle = "#17131f"; X.restore();
+    X.save(); X.translate(ex, -40); X.rotate(r + w);
+    X.fillStyle = fur; X.strokeStyle = furOut; X.lineWidth = 1.6;
+    X.beginPath(); X.ellipse(0, -12, 5, 15, 0, 0, 7); X.fill(); X.stroke();
+    glow("#ff9ec7", 8); X.fillStyle = earIn; X.beginPath(); X.ellipse(0, -11, 2.2, 10, 0, 0, 7); X.fill();
+    glow("#e6d8ff", 14); X.restore();
   });
-  X.beginPath(); X.ellipse(0, -17, 10, 14, 0, 0, 7); X.fill(); X.beginPath(); X.arc(2, -34, 11, 0, 7); X.fill();
+
+  X.fillStyle = fur; X.strokeStyle = furOut; X.lineWidth = 1.6;
+  X.beginPath(); X.ellipse(0, -17, 10, 14, 0, 0, 7); X.fill(); X.stroke();
+  X.beginPath(); X.arc(2, -34, 11, 0, 7); X.fill(); X.stroke();
+
   const hy = -2 + lf * .35 + (mv ? Math.sin(tt / 4) * 1.5 : 0), fw = mv ? -Math.sin(tt / 4) * 2.5 : 0;
   glow(ck.c, 6); X.fillStyle = ck.c; X.beginPath(); X.moveTo(-11, -26); X.lineTo(11, -26); X.lineTo(12 + fw, hy); X.quadraticCurveTo(6 + fw, hy + 5, fw, hy); X.quadraticCurveTo(-6 + fw, hy + 5, -12 + fw, hy); X.closePath(); X.fill();
   X.strokeStyle = "rgba(0,0,0,.35)"; X.lineWidth = 1.3; X.beginPath(); X.moveTo(-2, -24); X.lineTo(5 + fw * .7, hy); X.stroke();
   glow(ck.t, 6); X.strokeStyle = ck.t; X.lineWidth = 1.5; X.beginPath(); X.moveTo(-12 + fw, hy); X.quadraticCurveTo(-6 + fw, hy + 5, fw, hy); X.quadraticCurveTo(6 + fw, hy + 5, 12 + fw, hy); X.stroke();
   X.fillStyle = ck.c; X.beginPath(); X.ellipse(0, -24, 13, 5, 0, 0, 7); X.fill(); X.beginPath(); X.ellipse(0, -24, 13, 5, 0, 0, 7); X.stroke();
+
   glow("#ff7eb6", 8); X.fillStyle = "#ff7eb6";
   if (sit) {
-    const sw = Math.sin(tt / 12) * 3; X.lineCap = "round"; X.strokeStyle = "#17131f"; X.lineWidth = 5;
-    X.beginPath(); X.moveTo(-5, -1); X.lineTo(-5 + sw, 12); X.lineTo(7, -1); X.lineTo(7 - sw, 12); X.stroke();
+    const sw = Math.sin(tt / 12) * 3; X.lineCap = "round"; X.strokeStyle = fur; X.lineWidth = 5;
+    X.beginPath(); X.moveTo(-5, -1); X.lineTo(-5 + sw, 12); X.moveTo(7, -1); X.lineTo(7 - sw, 12); X.stroke();
     X.fillStyle = "#ff7eb6"; X.beginPath(); X.ellipse(-3 + sw, 15, 6, 3.5, 0, 0, 7); X.ellipse(9 - sw, 15, 6, 3.5, 0, 0, 7); X.fill();
   } else {
     X.beginPath(); X.ellipse(-7 + st, 1, 6, 3.5, 0, 0, 7); X.ellipse(7 - st, 1, 6, 3.5, 0, 0, 7); X.fill();
     X.fillStyle = "#fff"; X.fillRect(-12 + st, 3, 10, 1.5); X.fillRect(2 - st, 3, 10, 1.5);
   }
-  X.lineCap = "round"; X.strokeStyle = "#17131f"; X.lineWidth = 5; glow("#b58cff", 8);
+
+  X.lineCap = "round"; X.strokeStyle = fur; X.lineWidth = 5; glow("#e6d8ff", 8);
   const hx = 9 + c * 17 + (1 - c) * 5, hyy = -19 - c * 12 + (1 - c) * 10;
   X.beginPath(); X.moveTo(-10, -20); X.lineTo(-13, -10 + (mv ? Math.sin(tt / 4) * 2 : 0)); X.stroke();
   X.beginPath(); X.moveTo(10, -20); X.lineTo(hx, hyy); X.stroke();
-  X.fillStyle = "#17131f"; X.beginPath(); X.arc(-13, -10, 3.4, 0, 7); X.arc(hx, hyy, 3.6, 0, 7); X.fill();
+  X.fillStyle = fur; X.strokeStyle = furOut; X.lineWidth = 1.4;
+  X.beginPath(); X.arc(-13, -10, 3.4, 0, 7); X.fill(); X.stroke();
+  X.beginPath(); X.arc(hx, hyy, 3.6, 0, 7); X.fill(); X.stroke();
+
   if (c > 0) { glow(ck.sc, 22); X.fillStyle = ck.sc; X.beginPath(); X.arc(hx + 3, hyy - 3, 3 + c * 5, 0, 7); X.fill(); }
-  glow("#7de3ff", 12); X.fillStyle = "#bff6ff"; X.beginPath(); X.arc(8, -35, 2.7, 0, 7); X.arc(-1, -35, 2.2, 0, 7); X.fill();
-  glow("#ff7eb6", 14); X.fillStyle = "#ff9ec7"; X.beginPath(); X.arc(0, -21, 3.2, 0, 7); X.fill();
+  glow("#4aa8ff", 10); X.fillStyle = "#2d7ff9"; X.beginPath(); X.arc(8, -35, 2.7, 0, 7); X.arc(-1, -35, 2.2, 0, 7); X.fill();
+  X.fillStyle = "#ffffff"; X.beginPath(); X.arc(8.8, -35.8, 1, 0, 7); X.arc(-.3, -35.8, .9, 0, 7); X.fill();
+  glow("#ff7eb6", 12); X.fillStyle = "#ff7eb6"; X.beginPath(); X.arc(0, -21, 3.2, 0, 7); X.fill();
   X.restore(); X.shadowBlur = 0;
 }
 function book(x, y) {
