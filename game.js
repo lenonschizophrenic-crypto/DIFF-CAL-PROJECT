@@ -29,6 +29,16 @@ function updateProfileUI() {
   $("profCoins").textContent = "● " + (save.coins || 0) + " coins";
 }
 
+function hasProgress() {
+  return !!(save.started || save.bx != null || (save.w && save.w > 0) || (save.coins && save.coins > 0));
+}
+
+function updateTitleButtons() {
+  const prog = hasProgress();
+  $("new").hidden = prog;
+  $("cont").hidden = !prog;
+}
+
 function loginSuccess(key, data) {
   activeUser = key;
   save = data;
@@ -37,7 +47,7 @@ function loginSuccess(key, data) {
   applyDevice(false);
   $("loginBox").hidden = true;
   $("title").hidden = false;
-  $("cont").hidden = save.bx == null;
+  updateTitleButtons();
   S = "title";
   idle = Date.now();
 }
@@ -241,7 +251,8 @@ function goMenu() {
   B = null; Q = []; after = null; introOn = false; candE = null; setPause(false);
   save.coins = P.coins; store();
   $("dlg").hidden = true; $("battle").hidden = true; $("shop").hidden = true; $("end").hidden = true; $("shopS").hidden = true; $("askFight").hidden = true;
-  $("title").hidden = false; $("cont").hidden = save.bx == null;
+  $("title").hidden = false;
+  updateTitleButtons();
   S = "title"; cam = 0; idle = Date.now();
 }
 function load(wi, fs) {
@@ -260,10 +271,13 @@ function load(wi, fs) {
 }
 function begin(fs) {
   P.hp = P.max = 3; P.coins = save.coins || 0; seen.clear(); $("title").hidden = true; S = "play"; setPause(false); keys.left = keys.right = keys.jump = 0;
+  save.started = true;
+  if (!fs) save.w = 0;
+  store();
   load(fs ? save.w || 0 : 0, fs);
 }
 $("new").onclick = () => {
-  save = { displayName: save.displayName, tut: save.tut, own: save.own, cloak: save.cloak, skin: save.skin, coins: save.coins, dev: save.dev };
+  save = { displayName: save.displayName, tut: save.tut, own: save.own, cloak: save.cloak, skin: save.skin, coins: save.coins, dev: save.dev, started: true, w: 0 };
   store(); $("title").hidden = true; introOn = true;
   say([
     ["Spellbook", "Long ago, one Heart Crystal kept the magic of every world alive."],
@@ -324,7 +338,7 @@ $("dlg").onclick = next;
 
 /* ---------- shop ---------- */
 function openShop(from) { shopFrom = from; S = "shop"; $("title").hidden = true; $("shop").hidden = false; renderShop(); }
-function closeShop() { $("shop").hidden = true; if (shopFrom == "title") { S = "title"; $("title").hidden = false; } else S = "sit"; }
+function closeShop() { $("shop").hidden = true; if (shopFrom == "title") { S = "title"; $("title").hidden = false; updateTitleButtons(); } else S = "sit"; }
 function renderShop(msg) {
   const own = save.own || ["c0", "b0"];
   let h = '<h3 style="margin:0 0 4px">Shop</h3><div>● ' + P.coins + ' coins</div>';
@@ -465,7 +479,7 @@ function stand() { S = "play"; }
 /* ---------- update ---------- */
 function burst(x, y, c) { for (let i = 0; i < 18; i++) parts.push({ x, y, vx: (Math.random() - .5) * 7, vy: -Math.random() * 6, life: 45, c }); }
 function finish() {
-  delete save.bx; delete save.bd; delete save.w; save.tut = 1; save.coins = P.coins; store();
+  delete save.bx; delete save.bd; delete save.w; delete save.started; save.tut = 1; save.coins = P.coins; store();
   say([
     ["Spellbook", "The Heart Crystal blazes with light. The magic is restored."],
     ["Monica", "So… am I officially a great wizard now?"],
