@@ -153,6 +153,23 @@ body.mobile #title button {
   }
 }
 
+#devMenu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  display: flex;
+  gap: .5em;
+  padding: .55em .75em;
+  white-space: nowrap;
+  z-index: 15;
+}
+
+#devMenu button {
+  min-width: 5.5em;
+}
+
 #dlg {
   left: 3%;
   right: 3%;
@@ -300,20 +317,25 @@ body.mobile #bhint {
 #profBadge {
   position: absolute;
   top: 14%;
-  left: 2%;
+  left: auto;
+  right: 2%;
   z-index: 8;
   background: rgba(20, 12, 40, .84);
   color: #fff;
   border: 2px solid var(--accent);
   border-radius: .95em;
   padding: .55em .85em;
-  text-align: left;
+  text-align: right;
   box-shadow: 0 4px 16px rgba(0, 0, 0, .35);
   backdrop-filter: blur(4px);
 }
 
 #wrap[data-s=title] #profBadge {
   top: 3%;
+}
+
+#wrap:not([data-s=title]) #exitAcc {
+  display: none;
 }
 
 #wrap[data-s=battle] #profBadge,
