@@ -1,4 +1,4 @@
-js_code = r'''const $ = id => document.getElementById(id);
+const $ = id => document.getElementById(id);
 let K = 1;
 const wrap = $("wrap");
 const C = $("c"), X = C.getContext("2d");
@@ -2963,9 +2963,3 @@ if (window.visualViewport) visualViewport.addEventListener("resize", resize);
 applyDevice(false);
 setTimeout(() => $("nameIn").focus(), 50);
 requestAnimationFrame(loop);
-'''
-
-with open("game.js", "w", encoding="utf-8") as f:
-    f.write(js_code.strip() + "\n")
-
-print("Saved game.js successfully.")
