@@ -6,9 +6,9 @@ const GY = 370, LW = 4800, BENCH_X = 3950, BOSS_X = 4350, PORTAL_X = 4680, EX = 
 let S = "login", cam = 0, tt = 0, paused = false, idle = Date.now(), flash = 0, lastB = 100, WI = 0, sitT = 0, titleT = 0, introOn = false, sitB = null, shopFrom = "title", shopVis = false, invuln = 0, candE = null;
 let finT = 0, credY = 470, credDone = false, spawnT = 0;
 
-const EXIT_MESSAGE = "(exit message): test test test test";
+const EXIT_MESSAGE = "(exit message here): test test test test";
 const GROUP_MEMBERS = [
-  "Group 7",
+  "Group Members:",
   "Fernando R. Alonso Jr.",
   "Reshie A. Samontañes",
   "Patrick Layosa Catapang",
@@ -685,28 +685,299 @@ function next() {
 $("dlg").onclick = next;
 
 /* ---------- shop ---------- */
-function openShop(from) { shopFrom = from; S = "shop"; $("title").hidden = true; $("shop").hidden = false; renderShop(); }
-function closeShop() { $("shop").hidden = true; if (shopFrom == "title") { S = "title"; $("title").hidden = false; updateTitleButtons(); } else S = "sit"; }
+let prevCloak = null, prevBook = null, shopRaf = 0;
+
+function stopShopAnim() {
+  if (shopRaf) { cancelAnimationFrame(shopRaf); shopRaf = 0; }
+}
+
+function openShop(from) {
+  shopFrom = from;
+  prevCloak = save.cloak || "c0";
+  prevBook = save.skin || "b0";
+  S = "shop";
+  $("title").hidden = true;
+  $("shop").hidden = false;
+  renderShop();
+}
+
+function closeShop() {
+  stopShopAnim();
+  $("shop").hidden = true;
+  if (shopFrom == "title") { S = "title"; $("title").hidden = false; updateTitleButtons(); }
+  else S = "sit";
+}
+
+function drawShopPreviews() {
+  const cv = $("shopPrev");
+  if (!cv || $("shop").hidden) { shopRaf = 0; return; }
+  const ctx = cv.getContext("2d");
+  const Wc = cv.width, Hc = cv.height;
+  ctx.clearRect(0, 0, Wc, Hc);
+
+  const ckId = prevCloak || save.cloak || "c0";
+  const bkId = prevBook || save.skin || "b0";
+  const ck = CK[ckId] || CK.c0;
+  const bk = BK[bkId] || BK.b0;
+  const t = performance.now() / 16.666;
+
+  // Stage cards inside canvas
+  ctx.fillStyle = "rgba(18, 10, 38, 0.58)";
+  ctx.beginPath();
+  ctx.roundRect(6, 4, Wc / 2 - 10, Hc - 8, 10);
+  ctx.roundRect(Wc / 2 + 4, 4, Wc / 2 - 10, Hc - 8, 10);
+  ctx.fill();
+
+  // --- LEFT STAGE: Monica wearing previewed cloak + spell orb ---
+  const cx1 = Wc * 0.25, cy1 = Hc - 20;
+  ctx.save();
+  ctx.translate(cx1 - 12, cy1);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  const bob = Math.sin(t / 16) * 1.5;
+
+  // Wings if c4
+  if (ck.ab == "wings") {
+    ctx.fillStyle = "rgba(255,248,215,.95)";
+    ctx.strokeStyle = "#e6c86e";
+    ctx.lineWidth = 1.3;
+    const fl = Math.sin(t / 10) * 0.22;
+    for (const [r, len] of [[-0.85, 22], [-0.35, 16]]) {
+      ctx.save();
+      ctx.translate(-5, -22 - bob);
+      ctx.rotate(r + fl);
+      ctx.beginPath();
+      ctx.ellipse(-len * 0.75, 0, len, 6.5, 0, 0, 7);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+  // Cloud if c3
+  if (ck.ab == "float") {
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.arc(-11 + i * 11, 5 + Math.sin(t / 6 + i) * 1.5, 6.5, 0, 7);
+      ctx.fill();
+    }
+  }
+
+  // Cape back
+  ctx.fillStyle = ck.c;
+  ctx.strokeStyle = "#3c2b5e";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-2, -23 - bob);
+  ctx.quadraticCurveTo(-14, -14 - bob, -18 - Math.sin(t / 12) * 3, -3);
+  ctx.quadraticCurveTo(-10, 1, -2, -4 - bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Cloak body
+  ctx.beginPath();
+  ctx.moveTo(-7, -22 - bob);
+  ctx.lineTo(8, -22 - bob);
+  ctx.lineTo(11, -3 - bob * 0.5);
+  ctx.quadraticCurveTo(5.5, -bob * 0.5, 0, -3 - bob * 0.5);
+  ctx.quadraticCurveTo(-5.5, -bob * 0.5, -10, -3 - bob * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Trim
+  ctx.strokeStyle = ck.t;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(-9.5, -4.5 - bob * 0.5);
+  ctx.quadraticCurveTo(-5.5, -1.5 - bob * 0.5, 0, -4.5 - bob * 0.5);
+  ctx.quadraticCurveTo(5.5, -1.5 - bob * 0.5, 10.5, -4.5 - bob * 0.5);
+  ctx.stroke();
+
+  // Clasp
+  ctx.fillStyle = "#ffd84d";
+  ctx.beginPath();
+  ctx.arc(4, -21 - bob, 2.5, 0, 7);
+  ctx.fill();
+
+  // Head & Ears
+  [[-3.5, -0.16, 0.92], [5.5, 0.14, 1]].forEach(([ex, r, sc]) => {
+    ctx.save();
+    ctx.translate(ex, -38 - bob);
+    ctx.rotate(r + Math.sin(t / 18) * 0.08);
+    ctx.scale(sc, sc);
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#3c2b5e";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-4, 1);
+    ctx.bezierCurveTo(-5, -9, -4, -21, 0, -23);
+    ctx.bezierCurveTo(4, -21, 5, -9, 4, 1);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#ffbedd";
+    ctx.beginPath();
+    ctx.moveTo(-2, -1);
+    ctx.bezierCurveTo(-2.5, -8, -1.8, -16, 0, -17.5);
+    ctx.bezierCurveTo(1.8, -16, 2.5, -8, 2, -1);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  });
+
+  ctx.fillStyle = "#fff";
+  ctx.strokeStyle = "#3c2b5e";
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.ellipse(1.5, -32.5 - bob, 12, 10, 0, 0, 7);
+  ctx.fill();
+  ctx.stroke();
+
+  // Eyes
+  ctx.fillStyle = "#2b4c9b";
+  ctx.beginPath();
+  ctx.ellipse(7.5, -32.5 - bob, 2.3, 3, 0, 0, 7);
+  ctx.ellipse(-1, -32.5 - bob, 2, 2.8, 0, 0, 7);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(8.2, -33.5 - bob, 1, 0, 7);
+  ctx.arc(-0.3, -33.5 - bob, 0.9, 0, 7);
+  ctx.fill();
+
+  // Orbiting spell orb preview
+  const sx = 32, sy = -28 + Math.sin(t / 10) * 4;
+  ctx.shadowColor = ck.sc;
+  ctx.shadowBlur = 14;
+  ctx.fillStyle = ck.sc;
+  ctx.beginPath();
+  ctx.arc(sx, sy, 6 + Math.sin(t / 6) * 1.5, 0, 7);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  // Cloak label
+  ctx.fillStyle = "#ffd27a";
+  ctx.font = "bold 11px " + FONT;
+  ctx.textAlign = "center";
+  ctx.fillText(ck.n, cx1, Hc - 6);
+
+  // --- RIGHT STAGE: Floating Spellbook Skin ---
+  const cx2 = Wc * 0.75, cy2 = Hc * 0.43 + Math.sin(t / 14) * 3.5;
+  ctx.save();
+  ctx.translate(cx2, cy2);
+  ctx.shadowColor = bk.c == "rainbow" ? "hsl(" + (t * 3 % 360) + ",85%,65%)" : bk.c;
+  ctx.shadowBlur = 16;
+  ctx.fillStyle = bk.c == "rainbow" ? "hsl(" + (t * 3 % 360) + ",85%,60%)" : bk.c;
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.roundRect(-24, -17, 48, 34, 5);
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Spine & Pages
+  ctx.fillStyle = "rgba(0,0,0,0.28)";
+  ctx.fillRect(-24, -17, 7, 34);
+  ctx.fillStyle = "#fff8e7";
+  ctx.fillRect(-15, -13, 35, 4);
+  ctx.fillRect(-15, 9, 35, 4);
+
+  // Cover Emblem
+  ctx.fillStyle = "#ffd84d";
+  ctx.beginPath();
+  ctx.moveTo(4, -7);
+  ctx.lineTo(10, 0);
+  ctx.lineTo(4, 7);
+  ctx.lineTo(-2, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  ctx.fillStyle = "#9fe7ff";
+  ctx.font = "bold 11px " + FONT;
+  ctx.fillText(bk.n, cx2, Hc - 6);
+  ctx.textAlign = "left";
+
+  shopRaf = requestAnimationFrame(drawShopPreviews);
+}
+
 function renderShop(msg) {
+  stopShopAnim();
   const own = save.own || ["c0", "b0"];
   const dispCoins = save.isAdmin ? 99999 : P.coins;
-  let h = '<h3 style="margin:0 0 4px">Shop</h3><div>● ' + dispCoins + ' coins</div>';
-  const rows = (T, eq, lab) => {
-    h += '<h4 style="margin:10px 0 4px">' + lab + '</h4>';
-    for (const id in T) {
-      const i = T[id], o = own.includes(id);
-      h += '<div class="row"><span><b>' + i.n + '</b>' + (i.d ? '<br><small>' + i.d + '</small>' : '') + '</span><button data-id="' + id + '">' + (eq == id ? 'Equipped' : o ? 'Equip' : i.p + ' coins') + '</button></div>';
+  const eqC = save.cloak || "c0";
+  const eqB = save.skin || "b0";
+  if (!prevCloak) prevCloak = eqC;
+  if (!prevBook) prevBook = eqB;
+
+  const swatch = (item, isCloak) => {
+    if (isCloak) {
+      return '<span class="sw" style="background:' + item.c + ';border-color:' + item.t + ';box-shadow:0 0 8px ' + item.sc + '"></span>';
     }
+    const bg = item.c === "rainbow"
+      ? "linear-gradient(135deg,#ff5964,#ffca3a,#8ac926,#1982c4,#6a4c93)"
+      : item.c;
+    return '<span class="sw sw-book" style="background:' + bg + '"></span>';
   };
-  rows(CK, save.cloak || "c0", "Cloaks");
-  rows(BK, save.skin || "b0", "Spellbook skins");
-  h += '<p>' + (msg || '') + '</p><button id="sclose">Close</button>';
+
+  const buildCol = (T, eq, prevId, lab, isCloak) => {
+    let col = '<div class="shop-col"><h4>' + lab + '</h4><div class="shop-list">';
+    for (const id in T) {
+      const i = T[id], o = own.includes(id), isPrev = prevId === id;
+      col += '<div class="row' + (isPrev ? ' active-prev' : '') + '" data-prev="' + id + '">' +
+        '<div class="item-meta">' + swatch(i, isCloak) +
+        '<span><b>' + i.n + '</b>' + (i.d ? '<br><small>' + i.d + '</small>' : '') + '</span></div>' +
+        '<button type="button" data-id="' + id + '">' + (eq == id ? 'Equipped' : o ? 'Equip' : i.p + ' coins') + '</button>' +
+        '</div>';
+    }
+    col += '</div></div>';
+    return col;
+  };
+
+  let h = '<div class="shop-head">' +
+    '<div><h3 style="margin:0">Shop</h3><span class="shop-coins">● ' + dispCoins + ' coins</span></div>' +
+    '<canvas id="shopPrev" width="330" height="88"></canvas>' +
+    '<button id="sclose" type="button">Close</button>' +
+    '</div>';
+
+  h += '<div class="shop-grid">' +
+    buildCol(CK, eqC, prevCloak, "Cloaks", true) +
+    buildCol(BK, eqB, prevBook, "Spellbooks", false) +
+    '</div>';
+
+  if (msg) h += '<p class="shop-msg">' + msg + '</p>';
+
   $("shop").innerHTML = h;
-  $("shop").querySelectorAll("[data-id]").forEach(b => b.onclick = () => buy(b.dataset.id));
+
+  $("shop").querySelectorAll("[data-prev]").forEach(row => {
+    const pid = row.dataset.prev;
+    const selectPrev = () => {
+      if (pid[0] == "c") prevCloak = pid; else prevBook = pid;
+      $("shop").querySelectorAll("[data-prev]").forEach(r => {
+        const id = r.dataset.prev;
+        r.classList.toggle("active-prev", id === prevCloak || id === prevBook);
+      });
+    };
+    row.addEventListener("pointerenter", selectPrev);
+    row.addEventListener("click", selectPrev);
+  });
+
+  $("shop").querySelectorAll("[data-id]").forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    buy(b.dataset.id);
+  });
   $("sclose").onclick = closeShop;
+  drawShopPreviews();
 }
+
 function buy(id) {
-  const T = id[0] == "c" ? CK : BK, i = T[id]; save.own = save.own || ["c0", "b0"];
+  const T = id[0] == "c" ? CK : BK, i = T[id];
+  save.own = save.own || ["c0", "b0"];
+  if (id[0] == "c") prevCloak = id; else prevBook = id;
   if (!save.own.includes(id)) {
     if (!save.isAdmin) {
       if (P.coins < i.p) { SFX.bad(); renderShop("Not enough coins."); return; }
@@ -717,7 +988,9 @@ function buy(id) {
     save.own.push(id); SFX.heal();
   }
   if (id[0] == "c") save.cloak = id; else save.skin = id;
-  save.coins = save.isAdmin ? 99999 : P.coins; store(); renderShop();
+  save.coins = save.isAdmin ? 99999 : P.coins;
+  store();
+  renderShop();
 }
 
 /* ---------- math ---------- */
