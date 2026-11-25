@@ -1,10 +1,10 @@
-const $ = id => document.getElementById(id);
+js_code = r'''const $ = id => document.getElementById(id);
 let K = 1;
 const wrap = $("wrap");
 const C = $("c"), X = C.getContext("2d");
 const GY = 370, LW = 4800, BENCH_X = 3950, BOSS_X = 4350, PORTAL_X = 4680, EX = 620, SUP = ["", "", "²", "³", "⁴", "⁵"], FONT = "Trebuchet MS,sans-serif";
 let S = "login", cam = 0, tt = 0, paused = false, idle = Date.now(), flash = 0, lastB = 100, WI = 0, sitT = 0, titleT = 0, introOn = false, sitB = null, shopFrom = "title", shopVis = false, invuln = 0, candE = null;
-let finT = 0, credY = 470, credDone = false;
+let finT = 0, credY = 470, credDone = false, spawnT = 0;
 
 /* ---------- Ending Message & Credits Placeholders (Edit Here!) ---------- */
 const EXIT_MESSAGE = "(exit message here): Thank you for playing Monica Hop and restoring the Heart Crystal!";
@@ -37,6 +37,119 @@ function store() {
   updateProfileUI();
 }
 
+/* ---------- Game Over Overlay UI ---------- */
+function ensureGameOverUI() {
+  let box = $("gameOverBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "gameOverBox";
+    box.hidden = true;
+    box.style.cssText = "position:absolute;inset:0;z-index:55;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(12,5,24,.84);backdrop-filter:blur(4px);color:#fff;font-family:" + FONT + ";text-align:center;padding:20px;";
+    box.innerHTML =
+      '<div style="background:rgba(28,14,52,.94);border:2px solid #ff4f86;border-radius:18px;padding:26px 34px;max-width:420px;box-shadow:0 0 35px rgba(255,79,134,.35);">' +
+      '<h2 style="margin:0 0 8px;font:bold 34px Georgia,serif;color:#ff6b96;text-shadow:0 0 14px rgba(255,79,134,.6);">Game Over</h2>' +
+      '<p id="goChapterMsg" style="margin:0 0 20px;font-size:15px;color:#e8dcff;line-height:1.45;">Monica ran out of hearts! Ready to rise again?</p>' +
+      '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">' +
+      '<button type="button" id="goRetryBtn" style="padding:10px 20px;border-radius:12px;border:none;background:linear-gradient(135deg,#ff6b96,#9b5de5);color:#fff;font:bold 15px ' + FONT + ';cursor:pointer;box-shadow:0 4px 14px rgba(155,93,229,.45);">Play Again</button>' +
+      '<button type="button" id="goMenuBtn" style="padding:10px 20px;border-radius:12px;border:1.5px solid #9b5de5;background:#261347;color:#fff;font:bold 15px ' + FONT + ';cursor:pointer;">Main Menu</button>' +
+      '</div></div>';
+    wrap.appendChild(box);
+
+    $("goRetryBtn").onclick = () => {
+      box.hidden = true;
+      box.style.display = "none";
+      P.hp = P.max = 3;
+      save.hp = 3;
+      delete save.bx;
+      delete save.bd;
+      save.w = WI;
+      save.started = true;
+      store();
+      S = "play";
+      load(WI, false, true);
+    };
+
+    $("goMenuBtn").onclick = () => {
+      box.hidden = true;
+      box.style.display = "none";
+      P.hp = P.max = 3;
+      save.hp = 3;
+      delete save.bx;
+      delete save.bd;
+      save.w = WI;
+      store();
+      goMenu();
+    };
+  }
+  return box;
+}
+
+function showGameOver() {
+  const box = ensureGameOverUI();
+  $("goChapterMsg").textContent = "You fell in Chapter " + (WI + 1) + " (" + W[WI].n + "). Restart from the beginning of Chapter " + (WI + 1) + "?";
+  box.hidden = false;
+  box.style.display = "flex";
+  S = "gameover";
+  keys.left = keys.right = keys.jump = 0;
+  SFX.die();
+}
+
+/* ---------- Sky Resurrection / Spawn Light Animation ---------- */
+function triggerSpawnLight() {
+  spawnT = 75;
+  SFX.heal();
+  for (let i = 0; i < 24; i++) {
+    parts.push({
+      x: P.x + 14 + rnd(-26, 26),
+      y: GY - rnd(0, 120),
+      vx: (Math.random() - .5) * 1.4,
+      vy: -1.5 - Math.random() * 2.5,
+      life: 55 + rnd(0, 20),
+      c: i % 2 ? "#fff4a8" : "#9fe7ff"
+    });
+  }
+}
+
+function drawSpawnBeam() {
+  if (spawnT <= 0) return;
+  const cx = P.x + 14;
+  const prog = spawnT / 75;
+  const alpha = Math.min(1, prog * 1.35);
+  const wTop = 18 + (1 - prog) * 28;
+  const wBot = 46 + Math.sin(tt / 4) * 6;
+
+  X.save();
+  const bg = X.createLinearGradient(cx, 0, cx, GY);
+  bg.addColorStop(0, "rgba(255, 248, 195, " + (alpha * 0.72) + ")");
+  bg.addColorStop(0.65, "rgba(165, 235, 255, " + (alpha * 0.48) + ")");
+  bg.addColorStop(1, "rgba(255, 190, 230, " + (alpha * 0.15) + ")");
+
+  glow("#fff2a6", 28);
+  X.fillStyle = bg;
+  X.beginPath();
+  X.moveTo(cx - wTop, 0);
+  X.lineTo(cx + wTop, 0);
+  X.lineTo(cx + wBot, GY);
+  X.lineTo(cx - wBot, GY);
+  X.closePath();
+  X.fill();
+
+  const core = X.createLinearGradient(cx, 0, cx, GY);
+  core.addColorStop(0, "rgba(255, 255, 255, " + (alpha * 0.85) + ")");
+  core.addColorStop(1, "rgba(255, 255, 255, 0)");
+  X.fillStyle = core;
+  X.fillRect(cx - 5, 0, 10, GY);
+
+  X.strokeStyle = "rgba(255, 244, 175, " + (alpha * 0.85) + ")";
+  X.lineWidth = 2.2;
+  const ringR = (1 - prog) * 44 + 8;
+  X.beginPath();
+  X.ellipse(cx, GY - 2, ringR, ringR * 0.28, 0, 0, 7);
+  X.stroke();
+  X.restore();
+  X.shadowBlur = 0;
+}
+
 /* ---------- Admin Toolbar UI ---------- */
 function ensureAdminUI() {
   let bar = $("adminBar");
@@ -58,6 +171,8 @@ function ensureAdminUI() {
         if (B && B.tm) clearTimeout(B.tm);
         B = null; Q = []; after = null; introOn = false; candE = null; setPause(false);
         $("dlg").hidden = true; $("battle").hidden = true; $("shop").hidden = true; $("end").hidden = true; $("shopS").hidden = true; $("askFight").hidden = true; $("title").hidden = true;
+        const goBox = $("gameOverBox");
+        if (goBox) { goBox.hidden = true; goBox.style.display = "none"; }
         save.w = targetW;
         delete save.bx;
         delete save.bd;
@@ -66,7 +181,7 @@ function ensureAdminUI() {
         P.hp = P.max;
         S = "play";
         SFX.portal();
-        load(targetW, false);
+        load(targetW, false, true);
       };
     });
 
@@ -200,6 +315,8 @@ $("exitAcc").onclick = () => {
   if (B && B.tm) clearTimeout(B.tm);
   B = null; Q = []; after = null; introOn = false; candE = null; setPause(false);
   $("dlg").hidden = true; $("battle").hidden = true; $("shop").hidden = true; $("end").hidden = true; $("shopS").hidden = true; $("askFight").hidden = true; $("title").hidden = true;
+  const goBox = $("gameOverBox");
+  if (goBox) { goBox.hidden = true; goBox.style.display = "none"; }
   activeUser = ""; pendingUser = ""; save = {};
   updateProfileUI();
   ensureAdminUI();
@@ -356,7 +473,7 @@ const MU = [
 const mtof = m => 440 * 2 ** ((m - 69) / 12);
 function mstep() {
   let m = MU[WI], boss = S == "battle" && B && B.e.boss;
-  if (S == "title" || S == "login" || introOn || S == "shop" || S == "finale" || S == "credits") m = MU[3];
+  if (S == "title" || S == "login" || introOn || S == "shop" || S == "finale" || S == "credits" || S == "gameover") m = MU[3];
   let [r, sc, tm, ty] = m;
   if (boss) { r -= 12; sc = [0, 3, 5, 6, 7, 10]; tm = 210; ty = "sawtooth"; }
   if (!mute && AC && AC.state == "running") {
@@ -378,13 +495,17 @@ function goMenu() {
   if (B && B.tm) clearTimeout(B.tm);
   B = null; Q = []; after = null; introOn = false; candE = null; credDone = false; setPause(false);
   if (save.isAdmin) P.coins = 99999;
-  save.coins = P.coins; store();
+  save.coins = P.coins;
+  save.hp = P.hp;
+  store();
   $("dlg").hidden = true; $("battle").hidden = true; $("shop").hidden = true; $("end").hidden = true; $("shopS").hidden = true; $("askFight").hidden = true;
+  const goBox = $("gameOverBox");
+  if (goBox) { goBox.hidden = true; goBox.style.display = "none"; }
   $("title").hidden = false;
   updateTitleButtons();
   S = "title"; cam = 0; idle = Date.now();
 }
-function load(wi, fs) {
+function load(wi, fs, withLight) {
   WI = wi; const w = W[wi]; P.x = fs && save.bx != null ? save.bx : 280; P.y = GY - 40; P.vx = P.vy = 0; P.on = false; P.face = 1; lastB = P.x; invuln = 0; candE = null;
   const platSpecs = [
     { x: 600, y: rnd(260, 295) },
@@ -408,16 +529,24 @@ function load(wi, fs) {
   enemies.forEach(e => e.dead = e.boss ? !!(fs && save.bd) : !!cont);
   trig = (wi == 0 ? TRIG : [{ x: 0, lines: w.in }]).map(t => ({ ...t, done: (wi == 0 && !!save.tut) || (fs && t.x < P.x) }));
   cam = Math.max(0, Math.min(LW - 800, P.x - 300)); parts = []; fx = []; ice = []; titleT = fs ? 0 : 180;
+  if (withLight) triggerSpawnLight();
 }
 function begin(fs) {
-  P.hp = P.max = 3; P.coins = save.isAdmin ? 99999 : (save.coins || 0); seen.clear(); $("title").hidden = true; S = "play"; setPause(false); keys.left = keys.right = keys.jump = 0;
+  P.max = 3;
+  if (fs && save.hp != null && save.hp > 0) {
+    P.hp = Math.min(P.max, save.hp);
+  } else {
+    P.hp = P.max;
+  }
+  P.coins = save.isAdmin ? 99999 : (save.coins || 0); seen.clear(); $("title").hidden = true; S = "play"; setPause(false); keys.left = keys.right = keys.jump = 0;
   save.started = true;
+  save.hp = P.hp;
   if (!fs) save.w = 0;
   store();
-  load(fs ? save.w || 0 : 0, fs);
+  load(fs ? save.w || 0 : 0, fs, true);
 }
 $("new").onclick = () => {
-  save = { displayName: save.displayName, isAdmin: save.isAdmin, tut: save.tut, own: save.own, cloak: save.cloak, skin: save.skin, coins: save.isAdmin ? 99999 : save.coins, dev: save.dev, started: true, w: 0 };
+  save = { displayName: save.displayName, isAdmin: save.isAdmin, tut: save.tut, own: save.own, cloak: save.cloak, skin: save.skin, coins: save.isAdmin ? 99999 : save.coins, dev: save.dev, started: true, w: 0, hp: 3 };
   store(); $("title").hidden = true; introOn = true;
   say([
     ["Spellbook", "Long ago, one Heart Crystal kept the magic of every world alive."],
@@ -562,7 +691,9 @@ function submit() {
 }
 function loseFight() {
   $("battle").hidden = true;
-  P.hp--;
+  P.hp = Math.max(0, P.hp - 1);
+  save.hp = P.hp;
+  store();
   invuln = 120;
   if (P.hp <= 0) { die(); return; }
   SFX.bad();
@@ -572,14 +703,11 @@ function winFight() {
   const e = B.e; e.dead = true;
   if (save.isAdmin) P.coins = 99999;
   else P.coins += e.boss ? 25 : 15;
-  save.coins = P.coins; store(); $("battle").hidden = true;
+  save.coins = P.coins; save.hp = P.hp; store(); $("battle").hidden = true;
   say(e.win && e.win.length ? e.win : [["Monica", e.k == "lady" ? "I just defeated a bug with a math problem. I need a vacation." : pick(["Easy.", "That’s one less monster.", "Next!"])]]);
 }
 function die() {
-  SFX.die();
-  say([["Monica", "I’m out of hearts… I need a break."], ["Spellbook", "Returning you to your last bench checkpoint, or the start."]], () => {
-    P.x = lastB; P.y = GY - 40; P.vy = 0; P.hp = P.max; invuln = 0; cam = Math.max(0, Math.min(LW - 800, P.x - 300));
-  });
+  showGameOver();
 }
 $("go").onclick = submit;
 $("ans").addEventListener("keydown", e => { if (e.key == "Enter") { e.preventDefault(); submit(); } });
@@ -592,7 +720,7 @@ $("ans").addEventListener("keydown", e => { if (e.key == "Enter") { e.preventDef
 /* ---------- input ---------- */
 const KM = { ArrowLeft: "left", a: "left", A: "left", ArrowRight: "right", d: "right", D: "right", " ": "jump" };
 addEventListener("keydown", e => {
-  idle = Date.now(); sfxInit(); if (S == "battle" || S == "ask" || S == "login") return;
+  idle = Date.now(); sfxInit(); if (S == "battle" || S == "ask" || S == "login" || S == "gameover") return;
   if (S == "credits") {
     if (credDone) {
       if (["Enter", " ", "Escape"].includes(e.key)) { e.preventDefault(); SFX.blip(); goMenu(); }
@@ -635,7 +763,7 @@ document.querySelectorAll("#touch [data-k]").forEach(b => {
     e.preventDefault();
     if (k == "mute") { mute = !mute; b.textContent = mute ? "🔇" : "🔊"; return; }
     if (k == "pause") { if (S == "play" || S == "sit") setPause(!paused); return; }
-    if (paused || S == "shop" || S == "battle" || S == "ask" || S == "login" || S == "finale" || S == "credits") return;
+    if (paused || S == "shop" || S == "battle" || S == "ask" || S == "login" || S == "finale" || S == "credits" || S == "gameover") return;
     if (S == "dlg") { next(); return; }
     if (S == "sit") { stand(); return; }
     if (k == "act") act(); else keys[k] = 1;
@@ -661,7 +789,7 @@ function showEndBox() {
 
 function finish() {
   if (save.isAdmin) P.coins = 99999;
-  delete save.bx; delete save.bd; delete save.w; delete save.started; save.tut = 1; save.coins = P.coins; store();
+  delete save.bx; delete save.bd; delete save.w; delete save.started; delete save.hp; save.tut = 1; save.coins = P.coins; store();
   say([
     ["Spellbook", "The Heart Crystal blazes with light. The magic is restored."],
     ["Monica", "So… am I officially a great wizard now?"],
@@ -718,7 +846,8 @@ function bt() {
 function update() {
   if (paused) return;
   if (invuln > 0) invuln--;
-  for (const p of parts) { p.x += p.vx; p.y += p.vy; p.vy += (S == "finale" ? 0 : .25); p.life--; }
+  if (spawnT > 0) spawnT--;
+  for (const p of parts) { p.x += p.vx; p.y += p.vy; p.vy += (S == "finale" || spawnT > 0 ? 0 : .25); p.life--; }
   parts = parts.filter(p => p.life > 0); if (flash > 0) flash--;
   for (const f of fx) { f.x += f.vx || 0; f.y += f.vy || 0; f.vy = (f.vy || 0) + (f.g || 0); f.r += f.gr || 0; f.life--; }
   fx = fx.filter(f => f.life > 0); for (const q of ice) q.life--; ice = ice.filter(q => q.life > 0);
@@ -730,7 +859,7 @@ function update() {
     sitT++;
     if (sitT == 50) {
       SFX.coin();
-      save.w = WI; save.bx = lastB; save.coins = save.isAdmin ? 99999 : P.coins; save.bd = enemies[enemies.length - 1].dead; store();
+      save.w = WI; save.bx = lastB; save.hp = P.hp; save.coins = save.isAdmin ? 99999 : P.coins; save.bd = enemies[enemies.length - 1].dead; store();
       burst(P.x + 14, GY - 60, "#ffd84d"); burst(P.x + 14, GY - 60, "#9fe7ff");
     }
     return;
@@ -767,7 +896,7 @@ function update() {
   if (P.x > PORTAL_X - 55) {
     if (enemies[enemies.length - 1].dead) {
       SFX.portal();
-      if (WI < 4) say([["Spellbook", W[WI].out], ["Monica", "Another portal. I just wanted a nap."]], () => { save.w = WI + 1; delete save.bx; delete save.bd; save.coins = save.isAdmin ? 99999 : P.coins; store(); load(WI + 1, false); });
+      if (WI < 4) say([["Spellbook", W[WI].out], ["Monica", "Another portal. I just wanted a nap."]], () => { save.w = WI + 1; save.hp = P.hp; delete save.bx; delete save.bd; save.coins = save.isAdmin ? 99999 : P.coins; store(); load(WI + 1, false, true); });
       else finish();
       return;
     }
@@ -2706,7 +2835,9 @@ function drawWorld() {
   enemies.forEach(e => { if (!e.dead) { X.save(); X.translate(e.x, GY); if (e.boss) bossDraw(e); else enemy(e); X.restore(); } });
   const bd = enemies[enemies.length - 1].dead;
   drawPortal(PORTAL_X, w, bd);
-  drawFx(); monica(P.x, inSit ? P.y - 20 : P.y, P.face, { sit: inSit }); book(P.x - P.face * 26, P.y - 8);
+  drawFx();
+  drawSpawnBeam();
+  monica(P.x, inSit ? P.y - 20 : P.y, P.face, { sit: inSit }); book(P.x - P.face * 26, P.y - 8);
   if (inSit) bench(sitB.x, 1);
   if (S == "play") {
     for (const b of benches) if (Math.abs(P.x + 14 - b.x - 26) < 60) {
@@ -2832,3 +2963,9 @@ if (window.visualViewport) visualViewport.addEventListener("resize", resize);
 applyDevice(false);
 setTimeout(() => $("nameIn").focus(), 50);
 requestAnimationFrame(loop);
+'''
+
+with open("game.js", "w", encoding="utf-8") as f:
+    f.write(js_code.strip() + "\n")
+
+print("Saved game.js successfully.")
