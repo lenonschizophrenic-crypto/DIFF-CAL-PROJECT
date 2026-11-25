@@ -28,6 +28,10 @@ function saveDB() {
 
 function store() {
   if (!activeUser) return;
+  if (save.isAdmin) {
+    save.coins = 99999;
+    P.coins = 99999;
+  }
   db[activeUser.toLowerCase()] = save;
   saveDB();
   updateProfileUI();
@@ -112,11 +116,11 @@ function updateProfileUI() {
   if (!activeUser) { $("profBadge").hidden = true; return; }
   $("profBadge").hidden = false;
   $("profName").textContent = (save.isAdmin ? "★ " : "") + (save.displayName || activeUser);
-  $("profCoins").textContent = "● " + (save.coins || 0) + " coins";
+  $("profCoins").textContent = "● " + (save.isAdmin ? 99999 : (save.coins || 0)) + " coins";
 }
 
 function hasProgress() {
-  return !!(save.started || save.bx != null || (save.w && save.w > 0) || (save.coins && save.coins > 0));
+  return !!(save.started || save.bx != null || (save.w && save.w > 0) || (!save.isAdmin && save.coins && save.coins > 0));
 }
 
 function updateTitleButtons() {
@@ -128,6 +132,7 @@ function updateTitleButtons() {
 function loginSuccess(key, data) {
   activeUser = key;
   save = data;
+  if (save.isAdmin) save.coins = 99999;
   P.coins = save.coins || 0;
   store();
   applyDevice(false);
@@ -149,10 +154,10 @@ function checkName() {
       ...existing,
       displayName: "Admin07",
       isAdmin: true,
-      coins: Math.max(99999, existing.coins || 0),
-      own: ["c0", "c1", "c2", "c3", "c4", "b0", "b1", "b2", "b3"],
-      cloak: existing.cloak || "c4",
-      skin: existing.skin || "b3"
+      coins: 99999,
+      own: existing.own || ["c0", "b0"],
+      cloak: existing.cloak || "c0",
+      skin: existing.skin || "b0"
     };
     SFX.win();
     loginSuccess(key, adminSave);
@@ -371,7 +376,8 @@ function setPause(v) {
 }
 function goMenu() {
   if (B && B.tm) clearTimeout(B.tm);
-  B = null; Q = []; after = null; introOn = false; candE = null; setPause(false);
+  B = null; Q = []; after = null; introOn = false; candE = null; credDone = false; setPause(false);
+  if (save.isAdmin) P.coins = 99999;
   save.coins = P.coins; store();
   $("dlg").hidden = true; $("battle").hidden = true; $("shop").hidden = true; $("end").hidden = true; $("shopS").hidden = true; $("askFight").hidden = true;
   $("title").hidden = false;
@@ -404,14 +410,14 @@ function load(wi, fs) {
   cam = Math.max(0, Math.min(LW - 800, P.x - 300)); parts = []; fx = []; ice = []; titleT = fs ? 0 : 180;
 }
 function begin(fs) {
-  P.hp = P.max = 3; P.coins = save.coins || 0; seen.clear(); $("title").hidden = true; S = "play"; setPause(false); keys.left = keys.right = keys.jump = 0;
+  P.hp = P.max = 3; P.coins = save.isAdmin ? 99999 : (save.coins || 0); seen.clear(); $("title").hidden = true; S = "play"; setPause(false); keys.left = keys.right = keys.jump = 0;
   save.started = true;
   if (!fs) save.w = 0;
   store();
   load(fs ? save.w || 0 : 0, fs);
 }
 $("new").onclick = () => {
-  save = { displayName: save.displayName, isAdmin: save.isAdmin, tut: save.tut, own: save.own, cloak: save.cloak, skin: save.skin, coins: save.coins, dev: save.dev, started: true, w: 0 };
+  save = { displayName: save.displayName, isAdmin: save.isAdmin, tut: save.tut, own: save.own, cloak: save.cloak, skin: save.skin, coins: save.isAdmin ? 99999 : save.coins, dev: save.dev, started: true, w: 0 };
   store(); $("title").hidden = true; introOn = true;
   say([
     ["Spellbook", "Long ago, one Heart Crystal kept the magic of every world alive."],
@@ -422,7 +428,7 @@ $("new").onclick = () => {
   ], () => { introOn = false; begin(false); });
 };
 $("cont").onclick = () => begin(true);
-$("shopT").onclick = () => { P.coins = save.coins || 0; openShop("title"); };
+$("shopT").onclick = () => { P.coins = save.isAdmin ? 99999 : (save.coins || 0); openShop("title"); };
 $("shopS").onclick = () => openShop("sit");
 $("again").onclick = () => { $("end").hidden = true; goMenu(); };
 $("resumeBtn").onclick = () => setPause(false);
@@ -441,7 +447,7 @@ function promptFight(e) {
     $("fightYes").textContent = "Yes, Fight Boss!";
     $("fightNo").textContent = "Not Yet";
   } else {
-    msgEl.textContent = "Fight monster to earn knowledge and more coins at the same time?";
+    msgEl.textContent = "Fight monster to earn knowledge and extra coins at the same time";
     $("fightYes").textContent = "Yes, Fight!";
     $("fightNo").textContent = "No, Keep Farming";
   }
@@ -475,7 +481,8 @@ function openShop(from) { shopFrom = from; S = "shop"; $("title").hidden = true;
 function closeShop() { $("shop").hidden = true; if (shopFrom == "title") { S = "title"; $("title").hidden = false; updateTitleButtons(); } else S = "sit"; }
 function renderShop(msg) {
   const own = save.own || ["c0", "b0"];
-  let h = '<h3 style="margin:0 0 4px">Shop</h3><div>● ' + P.coins + ' coins</div>';
+  const dispCoins = save.isAdmin ? 99999 : P.coins;
+  let h = '<h3 style="margin:0 0 4px">Shop</h3><div>● ' + dispCoins + ' coins</div>';
   const rows = (T, eq, lab) => {
     h += '<h4 style="margin:10px 0 4px">' + lab + '</h4>';
     for (const id in T) {
@@ -493,11 +500,16 @@ function renderShop(msg) {
 function buy(id) {
   const T = id[0] == "c" ? CK : BK, i = T[id]; save.own = save.own || ["c0", "b0"];
   if (!save.own.includes(id)) {
-    if (P.coins < i.p) { SFX.bad(); renderShop("Not enough coins."); return; }
-    P.coins -= i.p; save.own.push(id); SFX.heal();
+    if (!save.isAdmin) {
+      if (P.coins < i.p) { SFX.bad(); renderShop("Not enough coins."); return; }
+      P.coins -= i.p;
+    } else {
+      P.coins = 99999;
+    }
+    save.own.push(id); SFX.heal();
   }
   if (id[0] == "c") save.cloak = id; else save.skin = id;
-  save.coins = P.coins; store(); renderShop();
+  save.coins = save.isAdmin ? 99999 : P.coins; store(); renderShop();
 }
 
 /* ---------- math ---------- */
@@ -557,7 +569,10 @@ function loseFight() {
   say([["Monica", "Ow! That hurt… I lost a heart, but I'm not giving up!"], ["Spellbook", "You have " + P.hp + " heart" + (P.hp == 1 ? "" : "s") + " left. Keep moving!"]]);
 }
 function winFight() {
-  const e = B.e; e.dead = true; P.coins += e.boss ? 25 : 15; save.coins = P.coins; store(); $("battle").hidden = true;
+  const e = B.e; e.dead = true;
+  if (save.isAdmin) P.coins = 99999;
+  else P.coins += e.boss ? 25 : 15;
+  save.coins = P.coins; store(); $("battle").hidden = true;
   say(e.win && e.win.length ? e.win : [["Monica", e.k == "lady" ? "I just defeated a bug with a math problem. I need a vacation." : pick(["Easy.", "That’s one less monster.", "Next!"])]]);
 }
 function die() {
@@ -579,6 +594,10 @@ const KM = { ArrowLeft: "left", a: "left", A: "left", ArrowRight: "right", d: "r
 addEventListener("keydown", e => {
   idle = Date.now(); sfxInit(); if (S == "battle" || S == "ask" || S == "login") return;
   if (S == "credits") {
+    if (credDone) {
+      if (["Enter", " ", "Escape"].includes(e.key)) { e.preventDefault(); SFX.blip(); goMenu(); }
+      return;
+    }
     if (e.key == " " || e.key == "ArrowDown" || e.key == "s" || e.key == "S") keys.jump = 1;
     if (e.key == "Escape") { showEndBox(); }
     return;
@@ -597,7 +616,18 @@ addEventListener("keydown", e => {
   if (e.key == "e" || e.key == "E") act();
 });
 addEventListener("keyup", e => { if (KM[e.key]) keys[KM[e.key]] = 0; if (S == "credits") keys.jump = 0; });
-addEventListener("pointerdown", () => { idle = Date.now(); sfxInit(); if (S == "credits") keys.jump = 1; });
+addEventListener("pointerdown", e => {
+  idle = Date.now(); sfxInit();
+  if (S == "credits") {
+    if (credDone) {
+      if (e.target && e.target.closest("#exitAcc, #devWrap")) return;
+      SFX.blip();
+      goMenu();
+    } else {
+      keys.jump = 1;
+    }
+  }
+});
 addEventListener("pointerup", () => { if (S == "credits") keys.jump = 0; });
 document.querySelectorAll("#touch [data-k]").forEach(b => {
   const k = b.dataset.k;
@@ -626,11 +656,11 @@ function burst(x, y, c) { for (let i = 0; i < 18; i++) parts.push({ x, y, vx: (M
 function showEndBox() {
   credDone = true;
   keys.jump = 0;
-  $("endtxt").textContent = "You defeated all five guardians and kept " + P.coins + " coins. Spend them in the shop and play again: every world is different each time.";
-  $("end").hidden = false;
+  $("end").hidden = true;
 }
 
 function finish() {
+  if (save.isAdmin) P.coins = 99999;
   delete save.bx; delete save.bd; delete save.w; delete save.started; save.tut = 1; save.coins = P.coins; store();
   say([
     ["Spellbook", "The Heart Crystal blazes with light. The magic is restored."],
@@ -671,8 +701,8 @@ function updateCredits() {
   if (credDone) return;
   const spd = keys.jump ? 3.2 : 0.95;
   credY -= spd;
-  const totalH = 420 + GROUP_MEMBERS.length * 34;
-  if (credY + totalH < 70) {
+  const totalH = 380 + GROUP_MEMBERS.length * 34;
+  if (credY + totalH < 0) {
     showEndBox();
   }
 }
@@ -700,7 +730,7 @@ function update() {
     sitT++;
     if (sitT == 50) {
       SFX.coin();
-      save.w = WI; save.bx = lastB; save.coins = P.coins; save.bd = enemies[enemies.length - 1].dead; store();
+      save.w = WI; save.bx = lastB; save.coins = save.isAdmin ? 99999 : P.coins; save.bd = enemies[enemies.length - 1].dead; store();
       burst(P.x + 14, GY - 60, "#ffd84d"); burst(P.x + 14, GY - 60, "#9fe7ff");
     }
     return;
@@ -718,7 +748,12 @@ function update() {
   for (const p of plats) if (P.vy >= 0 && P.x + P.w > p.x && P.x < p.x + p.w && P.y + P.h >= p.y && P.y + P.h - P.vy <= p.y + 4) { P.y = p.y - P.h; P.vy = 0; P.on = true; }
   if (P.on) P.air = 2;
   emitFx();
-  for (const c of coins) if (!c.got && Math.abs(P.x + 14 - c.x) < 22 && Math.abs(P.y + 20 - c.y) < 30) { c.got = true; P.coins++; save.coins = P.coins; store(); SFX.coin(); }
+  for (const c of coins) if (!c.got && Math.abs(P.x + 14 - c.x) < 22 && Math.abs(P.y + 20 - c.y) < 30) {
+    c.got = true;
+    if (save.isAdmin) P.coins = 99999;
+    else P.coins++;
+    save.coins = P.coins; store(); SFX.coin();
+  }
   for (const t of trig) if (!t.done && P.x >= t.x) { t.done = true; if (!t.lines.length) continue; say(t.lines, () => { if (t.last) { save.tut = 1; store(); } }); return; }
   for (const e of enemies) {
     if (e.dead) continue;
@@ -732,7 +767,7 @@ function update() {
   if (P.x > PORTAL_X - 55) {
     if (enemies[enemies.length - 1].dead) {
       SFX.portal();
-      if (WI < 4) say([["Spellbook", W[WI].out], ["Monica", "Another portal. I just wanted a nap."]], () => { save.w = WI + 1; delete save.bx; delete save.bd; save.coins = P.coins; store(); load(WI + 1, false); });
+      if (WI < 4) say([["Spellbook", W[WI].out], ["Monica", "Another portal. I just wanted a nap."]], () => { save.w = WI + 1; delete save.bx; delete save.bd; save.coins = save.isAdmin ? 99999 : P.coins; store(); load(WI + 1, false); });
       else finish();
       return;
     }
@@ -2466,7 +2501,6 @@ function drawFinale() {
   const p = Math.min(1, finT / 220);
   const pulse = Math.sin(tt / 6) * 6;
 
-  // Skyward magic light pillar
   if (finT > 30) {
     const beamA = Math.min(.55, (finT - 30) / 140);
     const bgGrad = X.createLinearGradient(0, 0, 0, GY);
@@ -2477,7 +2511,6 @@ function drawFinale() {
     X.fillRect(cx - 35 - p * 45, 0, 70 + p * 90, GY);
   }
 
-  // Stone pedestal under the Heart Crystal
   X.fillStyle = "#3c2f59";
   X.strokeStyle = "#ffd27a";
   X.lineWidth = 2;
@@ -2487,7 +2520,6 @@ function drawFinale() {
   X.fill();
   X.stroke();
 
-  // Expanding shockwave rings
   for (let r = 0; r < 3; r++) {
     const rad = ((finT * 2.4 + r * 70) % 210);
     const alpha = Math.max(0, 1 - rad / 210) * .65;
@@ -2498,7 +2530,6 @@ function drawFinale() {
     X.stroke();
   }
 
-  // Blazing Restored Heart Crystal
   glow("#ffd84d", 45 + p * 35);
   const cg = X.createRadialGradient(cx, cy, 4, cx, cy, 62 + pulse);
   cg.addColorStop(0, "#ffffff");
@@ -2515,7 +2546,6 @@ function drawFinale() {
   X.fill();
   X.shadowBlur = 0;
 
-  // Monica & Spellbook celebrating beside the crystal
   monica(255, GY - 40, 1, { cast: p > .15 ? .8 : 0 });
   book(302, GY - 82);
 
@@ -2529,7 +2559,6 @@ function drawFinale() {
   X.globalAlpha = 1;
   fireflies("#ffd84d");
 
-  // Smooth fade to black at the end of the animation
   if (finT > 220) {
     const fade = Math.min(1, (finT - 220) / 95);
     X.fillStyle = "rgba(0, 0, 0, " + fade + ")";
@@ -2541,7 +2570,6 @@ function drawCredits() {
   X.fillStyle = "#000000";
   X.fillRect(0, 0, 800, 450);
 
-  // Subtle twinkling stars in the black background
   X.fillStyle = "#ffffff";
   for (let i = 0; i < 45; i++) {
     X.globalAlpha = .2 + .5 * Math.abs(Math.sin(tt / 28 + i));
@@ -2549,73 +2577,81 @@ function drawCredits() {
   }
   X.globalAlpha = 1;
 
-  let y = credY;
   X.textAlign = "center";
 
-  // Game Title
-  glow("#ff7eb6", 24);
-  X.fillStyle = "#ffffff";
-  X.font = "bold 46px Georgia,serif";
-  X.fillText("Monica Hop", 400, y);
-  y += 38;
-
-  glow("#7de3ff", 12);
-  X.fillStyle = "#9fe7ff";
-  X.font = "bold 18px " + FONT;
-  X.fillText("Chapter 1 – 5 Complete · The Heart Crystal is Restored", 400, y);
-  X.shadowBlur = 0;
-  y += 64;
-
-  // Exit Message Placeholder Section
-  X.fillStyle = "#ffd84d";
-  X.font = "bold 16px " + FONT;
-  X.fillText("— EXIT MESSAGE —", 400, y);
-  y += 30;
-
-  X.fillStyle = "#ffffff";
-  X.font = "17px " + FONT;
-  // Wrap exit message cleanly if long
-  const words = EXIT_MESSAGE.split(" ");
-  let line = "";
-  for (let i = 0; i < words.length; i++) {
-    const test = line + words[i] + " ";
-    if (X.measureText(test).width > 640 && i > 0) {
-      X.fillText(line.trim(), 400, y);
-      line = words[i] + " ";
-      y += 26;
-    } else {
-      line = test;
-    }
-  }
-  if (line.trim()) {
-    X.fillText(line.trim(), 400, y);
-    y += 26;
-  }
-  y += 46;
-
-  // Group Members Placeholder Section
-  X.fillStyle = "#ff7eb6";
-  X.font = "bold 18px " + FONT;
-  X.fillText("— CREATED BY —", 400, y);
-  y += 34;
-
-  GROUP_MEMBERS.forEach((m, idx) => {
-    X.fillStyle = idx === 0 ? "#ffd84d" : "#f0e6ff";
-    X.font = (idx === 0 ? "bold 17px " : "17px ") + FONT;
-    X.fillText(m, 400, y);
-    y += 32;
-  });
-
-  y += 45;
-  X.fillStyle = "#9fe7ff";
-  X.font = "bold 18px " + FONT;
-  X.fillText("Final Coins Collected: ● " + P.coins, 400, y);
-
   if (!credDone) {
+    let y = credY;
+
+    glow("#ff7eb6", 24);
+    X.fillStyle = "#ffffff";
+    X.font = "bold 46px Georgia,serif";
+    X.fillText("Monica Hop", 400, y);
+    y += 38;
+
+    glow("#7de3ff", 12);
+    X.fillStyle = "#9fe7ff";
+    X.font = "bold 18px " + FONT;
+    X.fillText("Chapter 1 – 5 Complete · The Heart Crystal is Restored", 400, y);
+    X.shadowBlur = 0;
+    y += 64;
+
+    X.fillStyle = "#ffd84d";
+    X.font = "bold 16px " + FONT;
+    X.fillText("— EXIT MESSAGE —", 400, y);
+    y += 30;
+
+    X.fillStyle = "#ffffff";
+    X.font = "17px " + FONT;
+    const words = EXIT_MESSAGE.split(" ");
+    let line = "";
+    for (let i = 0; i < words.length; i++) {
+      const test = line + words[i] + " ";
+      if (X.measureText(test).width > 640 && i > 0) {
+        X.fillText(line.trim(), 400, y);
+        line = words[i] + " ";
+        y += 26;
+      } else {
+        line = test;
+      }
+    }
+    if (line.trim()) {
+      X.fillText(line.trim(), 400, y);
+      y += 26;
+    }
+    y += 46;
+
+    X.fillStyle = "#ff7eb6";
+    X.font = "bold 18px " + FONT;
+    X.fillText("— CREATED BY —", 400, y);
+    y += 34;
+
+    GROUP_MEMBERS.forEach((m, idx) => {
+      X.fillStyle = idx === 0 ? "#ffd84d" : "#f0e6ff";
+      X.font = (idx === 0 ? "bold 17px " : "17px ") + FONT;
+      X.fillText(m, 400, y);
+      y += 32;
+    });
+
+    y += 45;
+    X.fillStyle = "#9fe7ff";
+    X.font = "bold 18px " + FONT;
+    X.fillText("Final Coins Collected: ● " + (save.isAdmin ? 99999 : P.coins), 400, y);
+
     X.fillStyle = "rgba(255,255,255,.45)";
     X.font = "12px " + FONT;
     X.fillText("Hold Space or Click to fast-forward credits", 400, 434);
+  } else {
+    const pulse = .45 + .55 * Math.abs(Math.sin(tt / 18));
+    X.save();
+    X.globalAlpha = pulse;
+    glow("#ff7eb6", 22);
+    X.fillStyle = "#ffffff";
+    X.font = "bold 28px " + FONT;
+    X.fillText("return to main menu", 400, 230);
+    X.restore();
+    X.shadowBlur = 0;
   }
+
   X.textAlign = "left";
 }
 
