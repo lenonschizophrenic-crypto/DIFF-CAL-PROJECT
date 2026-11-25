@@ -2,7 +2,7 @@ const $ = id => document.getElementById(id);
 let K = 1;
 const wrap = $("wrap");
 const C = $("c"), X = C.getContext("2d");
-const GY = 370, LW = 3300, EX = 620, SUP = ["", "", "²", "³", "⁴", "⁵"], FONT = "Trebuchet MS,sans-serif";
+const GY = 370, LW = 4800, BENCH_X = 3950, BOSS_X = 4350, PORTAL_X = 4680, EX = 620, SUP = ["", "", "²", "³", "⁴", "⁵"], FONT = "Trebuchet MS,sans-serif";
 let S = "login", cam = 0, tt = 0, paused = false, idle = Date.now(), flash = 0, lastB = 100, WI = 0, sitT = 0, titleT = 0, introOn = false, sitB = null, shopFrom = "title", shopVis = false, invuln = 0, candE = null;
 
 /* ---------- local profiles & save ---------- */
@@ -22,10 +22,85 @@ function store() {
   updateProfileUI();
 }
 
+/* ---------- Admin Toolbar UI ---------- */
+function ensureAdminUI() {
+  let bar = $("adminBar");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "adminBar";
+    bar.style.cssText = "position:absolute;top:44px;left:12px;z-index:45;display:flex;flex-wrap:wrap;gap:4px;background:rgba(16,8,34,.86);border:1.5px solid #ff7eb6;border-radius:10px;padding:5px 7px;font:bold 11px " + FONT + ";color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.45);max-width:340px;";
+    bar.innerHTML =
+      '<span style="color:#ffd84d;align-self:center;margin-right:2px">★ ADMIN:</span>' +
+      [0, 1, 2, 3, 4].map(i => '<button type="button" data-tp="' + i + '" style="padding:3px 6px;border-radius:6px;border:1px solid #9b5de5;background:#2f1954;color:#fff;cursor:pointer;font-size:11px">Ch' + (i + 1) + '</button>').join("") +
+      '<button type="button" id="admKillMobs" style="padding:3px 7px;border-radius:6px;border:1px solid #ff6b8b;background:#591934;color:#fff;cursor:pointer;font-size:11px">Kill Mobs</button>' +
+      '<button type="button" id="admKillBoss" style="padding:3px 7px;border-radius:6px;border:1px solid #ff9a1a;background:#5e2d0c;color:#ffd84d;cursor:pointer;font-size:11px">Kill Boss</button>';
+    wrap.appendChild(bar);
+
+    bar.querySelectorAll("[data-tp]").forEach(btn => {
+      btn.onclick = () => {
+        if (!save.isAdmin) return;
+        const targetW = parseInt(btn.dataset.tp, 10);
+        if (B && B.tm) clearTimeout(B.tm);
+        B = null; Q = []; after = null; introOn = false; candE = null; setPause(false);
+        $("dlg").hidden = true; $("battle").hidden = true; $("shop").hidden = true; $("end").hidden = true; $("shopS").hidden = true; $("askFight").hidden = true; $("title").hidden = true;
+        save.w = targetW;
+        delete save.bx;
+        delete save.bd;
+        save.started = true;
+        store();
+        P.hp = P.max;
+        S = "play";
+        SFX.portal();
+        load(targetW, false);
+      };
+    });
+
+    $("admKillMobs").onclick = () => {
+      if (!save.isAdmin) return;
+      if (S == "battle" && B && !B.e.boss) {
+        clearTimeout(B.tm);
+        B.cast = { t: 28, fin: true };
+        winFight();
+        return;
+      }
+      let killed = 0;
+      enemies.forEach(e => {
+        if (!e.boss && !e.dead) {
+          e.dead = true;
+          burst(e.x, GY - 30, "#ff7eb6");
+          killed++;
+        }
+      });
+      if (killed > 0) SFX.win();
+    };
+
+    $("admKillBoss").onclick = () => {
+      if (!save.isAdmin) return;
+      if (S == "battle" && B && B.e.boss) {
+        clearTimeout(B.tm);
+        B.cast = { t: 28, fin: true };
+        winFight();
+        return;
+      }
+      const boss = enemies[enemies.length - 1];
+      if (boss && !boss.dead) {
+        boss.dead = true;
+        save.bd = true;
+        store();
+        burst(boss.x, GY - 70, "#ffd84d");
+        burst(boss.x, GY - 70, "#ff4f86");
+        SFX.win();
+      }
+    };
+  }
+  const show = !!(save && save.isAdmin && ["play", "sit", "battle", "dlg", "ask"].includes(S));
+  bar.style.display = show ? "flex" : "none";
+}
+
 function updateProfileUI() {
   if (!activeUser) { $("profBadge").hidden = true; return; }
   $("profBadge").hidden = false;
-  $("profName").textContent = save.displayName || activeUser;
+  $("profName").textContent = (save.isAdmin ? "★ " : "") + (save.displayName || activeUser);
   $("profCoins").textContent = "● " + (save.coins || 0) + " coins";
 }
 
@@ -50,12 +125,28 @@ function loginSuccess(key, data) {
   updateTitleButtons();
   S = "title";
   idle = Date.now();
+  ensureAdminUI();
 }
 
 function checkName() {
   const raw = $("nameIn").value.trim();
   if (!raw) { $("loginMsg").textContent = "Please type a name first."; return; }
   const key = raw.toLowerCase();
+  if (key === "admin666") {
+    const existing = db[key] || {};
+    const adminSave = {
+      ...existing,
+      displayName: "Admin666",
+      isAdmin: true,
+      coins: Math.max(99999, existing.coins || 0),
+      own: ["c0", "c1", "c2", "c3", "c4", "b0", "b1", "b2", "b3"],
+      cloak: existing.cloak || "c4",
+      skin: existing.skin || "b3"
+    };
+    SFX.win();
+    loginSuccess(key, adminSave);
+    return;
+  }
   if (db[key]) {
     SFX.heal();
     loginSuccess(key, db[key]);
@@ -95,6 +186,7 @@ $("exitAcc").onclick = () => {
   $("dlg").hidden = true; $("battle").hidden = true; $("shop").hidden = true; $("end").hidden = true; $("shopS").hidden = true; $("askFight").hidden = true; $("title").hidden = true;
   activeUser = ""; pendingUser = ""; save = {};
   updateProfileUI();
+  ensureAdminUI();
   applyDevice(false);
   $("nameIn").value = "";
   $("loginMsg").textContent = "";
@@ -169,8 +261,8 @@ const HINT = [
 ];
 const TRIG = [
   { x: 0, lines: [["Monica", "Ugh… where am I?"], ["Spellbook", "The Enchanted Forest. Move with A and D or the arrow keys. Jump with Space."], ["Monica", "Try moving! Unless you plan to stay here forever."]] },
-  { x: 680, lines: [["Spellbook", "Your magic runs on derivatives. The derivative of a constant is zero."], ["Monica", "So y = 10000 gives y′ = 0? I could’ve done that in my sleep."], ["Spellbook", "Powers: y = x² gives y′ = 2x. Bring the power down, then subtract one."]] },
-  { x: 2450, lines: [["Spellbook", "A bench lies ahead, the only one in this world. Press E to sit: it heals you, saves your progress and opens the shop."], ["Monica", "Finally. A chair. My kingdom needs more chairs."], ["Spellbook", "A guardian waits beyond it. Its questions are much harder than the little monsters’."]], last: 1 }
+  { x: 750, lines: [["Spellbook", "Your magic runs on derivatives. The derivative of a constant is zero."], ["Monica", "So y = 10000 gives y′ = 0? I could’ve done that in my sleep."], ["Spellbook", "Powers: y = x² gives y′ = 2x. Bring the power down, then subtract one."]] },
+  { x: 3650, lines: [["Spellbook", "A bench lies ahead, the only one in this world. Press E to sit: it saves your checkpoint and opens the shop."], ["Monica", "Finally. A chair. No healing though? Tough crowd."], ["Spellbook", "A guardian waits beyond it. Its questions are much harder than the little monsters’."]], last: 1 }
 ];
 
 /* ---------- sound ---------- */
@@ -257,13 +349,25 @@ function goMenu() {
 }
 function load(wi, fs) {
   WI = wi; const w = W[wi]; P.x = fs && save.bx != null ? save.bx : 280; P.y = GY - 40; P.vx = P.vy = 0; P.on = false; P.face = 1; lastB = P.x; invuln = 0; candE = null;
-  plats = [600, 1100, 1600, 2050, 2420].map((x, idx) => ({ x: x + rnd(-60, 60), y: rnd(255, 300), w: rnd(120, 175), seed: idx * 17 + wi * 31 }));
-  benches = [{ x: 2760 }];
-  coins = []; for (let i = 0; i < 32; i++) if (Math.random() < .75) coins.push({ x: 250 + i * 92 + rnd(-10, 10), y: GY - 26 - (Math.random() < .25 ? 65 : 0) });
-  plats.forEach(p => { for (let k = 0; k < 3; k++) coins.push({ x: p.x + 22 + k * 35, y: p.y - 24 }); });
-  const n = rnd(2, 3), xs = [900, 1650, 2300].slice(0, n).map(x => x + rnd(-80, 120));
+  // Extended parkour layout across 4800px chapter length (including multi-tier high platforms)
+  const platSpecs = [
+    { x: 600, y: rnd(260, 295) },
+    { x: 1050, y: rnd(255, 290) },
+    { x: 1320, y: rnd(195, 225) },
+    { x: 1750, y: rnd(260, 295) },
+    { x: 2220, y: rnd(255, 290) },
+    { x: 2500, y: rnd(195, 225) },
+    { x: 2980, y: rnd(260, 295) },
+    { x: 3480, y: rnd(255, 290) }
+  ];
+  plats = platSpecs.map((s, idx) => ({ x: s.x + rnd(-45, 45), y: s.y, w: rnd(125, 175), seed: idx * 17 + wi * 31 }));
+  benches = [{ x: BENCH_X }];
+  coins = [];
+  for (let i = 0; i < 46; i++) if (Math.random() < .75) coins.push({ x: 260 + i * 94 + rnd(-10, 10), y: GY - 26 - (Math.random() < .25 ? 65 : 0) });
+  plats.forEach(p => { for (let k = 0; k < 3; k++) coins.push({ x: p.x + 22 + k * 36, y: p.y - 24 }); });
+  const n = rnd(4, 5), xs = [920, 1620, 2360, 3080, 3620].slice(0, n).map(x => x + rnd(-70, 90));
   enemies = xs.map(x => { const k = pick(w.pool); return { x, k, t: rnd(w.mt[0], w.mt[1]), q: 3, n: NM[k], taunt: TA[k], ph: Math.random() * 6, skip: false }; });
-  enemies.push({ x: 3000, boss: 1, q: w.boss.hp, ph: 0, skip: false, ...w.boss });
+  enemies.push({ x: BOSS_X, boss: 1, q: w.boss.hp, ph: 0, skip: false, ...w.boss });
   const cont = fs && save.bx != null;
   enemies.forEach(e => e.dead = e.boss ? !!(fs && save.bd) : !!cont);
   trig = (wi == 0 ? TRIG : [{ x: 0, lines: w.in }]).map(t => ({ ...t, done: (wi == 0 && !!save.tut) || (fs && t.x < P.x) }));
@@ -277,7 +381,7 @@ function begin(fs) {
   load(fs ? save.w || 0 : 0, fs);
 }
 $("new").onclick = () => {
-  save = { displayName: save.displayName, tut: save.tut, own: save.own, cloak: save.cloak, skin: save.skin, coins: save.coins, dev: save.dev, started: true, w: 0 };
+  save = { displayName: save.displayName, isAdmin: save.isAdmin, tut: save.tut, own: save.own, cloak: save.cloak, skin: save.skin, coins: save.coins, dev: save.dev, started: true, w: 0 };
   store(); $("title").hidden = true; introOn = true;
   say([
     ["Spellbook", "Long ago, one Heart Crystal kept the magic of every world alive."],
@@ -428,7 +532,7 @@ function winFight() {
 }
 function die() {
   SFX.die();
-  say([["Monica", "I’m out of hearts… I need a break."], ["Spellbook", "Returning you to your last bench, or the start. Sit on a bench to heal."]], () => {
+  say([["Monica", "I’m out of hearts… I need a break."], ["Spellbook", "Returning you to your last bench checkpoint, or the start."]], () => {
     P.x = lastB; P.y = GY - 40; P.vy = 0; P.hp = P.max; invuln = 0; cam = Math.max(0, Math.min(LW - 800, P.x - 300));
   });
 }
@@ -450,7 +554,11 @@ addEventListener("keydown", e => {
   if (S == "dlg") { if (["Enter", " ", "e", "E"].includes(e.key)) { e.preventDefault(); next(); } return; }
   if (S == "sit") { if ((e.key == "s" || e.key == "S") && sitT >= 50) { openShop("sit"); return; } if (e.key == "e" || e.key == "E" || KM[e.key]) { e.preventDefault(); stand(); } return; }
   if (e.key == "m" || e.key == "M") { mute = !mute; return; }
-  if (KM[e.key]) { keys[KM[e.key]] = 1; e.preventDefault(); }
+  if (KM[e.key]) {
+    if (e.repeat && KM[e.key] == "jump") { e.preventDefault(); return; }
+    keys[KM[e.key]] = 1;
+    e.preventDefault();
+  }
   if (e.key == "e" || e.key == "E") act();
 });
 addEventListener("keyup", e => { if (KM[e.key]) keys[KM[e.key]] = 0; });
@@ -512,15 +620,18 @@ function update() {
   if (S == "sit") {
     sitT++;
     if (sitT == 50) {
-      SFX.heal(); P.hp = P.max; save.w = WI; save.bx = lastB; save.coins = P.coins; save.bd = enemies[enemies.length - 1].dead; store();
-      burst(P.x + 14, GY - 60, "#ff9ad5"); burst(P.x + 14, GY - 60, "#9ff0c0");
+      // Checkpoint save only (no health recovery)
+      SFX.coin();
+      save.w = WI; save.bx = lastB; save.coins = P.coins; save.bd = enemies[enemies.length - 1].dead; store();
+      burst(P.x + 14, GY - 60, "#ffd84d"); burst(P.x + 14, GY - 60, "#9fe7ff");
     }
     return;
   }
   if (S != "play") return;
   const dir = keys.right - keys.left, ab = cur().ab;
   P.vx = dir * 4.8; if (dir) P.face = dir;
-  if (keys.jump && P.on) { P.vy = -12.5; P.on = false; SFX.jump(); }
+  // Single press per jump (prevents holding jump to spam-hop)
+  if (keys.jump && !P.jp && P.on) { P.vy = -12.5; P.on = false; SFX.jump(); }
   else if (keys.jump && !P.jp && !P.on && ab == "wings" && P.air > 0) { P.vy = -10.8; P.air--; SFX.jump(); burst(P.x + 14, P.y + 30, "#fff6b0"); }
   P.jp = keys.jump;
   if (ab == "float" && keys.jump && !P.on && P.vy > 1) P.vy = 1;
@@ -541,14 +652,14 @@ function update() {
       return;
     }
   }
-  if (P.x > 3170) {
+  if (P.x > PORTAL_X - 55) {
     if (enemies[enemies.length - 1].dead) {
       SFX.portal();
       if (WI < 4) say([["Spellbook", W[WI].out], ["Monica", "Another portal. I just wanted a nap."]], () => { save.w = WI + 1; delete save.bx; delete save.bd; save.coins = P.coins; store(); load(WI + 1, false); });
       else finish();
       return;
     }
-    P.x = 3170;
+    P.x = PORTAL_X - 55;
   }
   cam += (Math.max(0, Math.min(LW - 800, P.x - 320)) - cam) * .16;
 }
@@ -1564,11 +1675,9 @@ function bg(w) {
 function ground(w) {
   const x0 = Math.floor(cam / 40) * 40 - 40, x1 = cam + 860;
 
-  // Deep soil base
   X.fillStyle = w.soil || "#5c3b24";
   X.fillRect(cam - 2, GY, 804, 90);
 
-  // Wavy sub-crust layer
   X.fillStyle = w.gd;
   X.beginPath();
   X.moveTo(x0, GY);
@@ -1579,7 +1688,6 @@ function ground(w) {
   X.closePath();
   X.fill();
 
-  // Top lush turf strip with scalloped overhang
   X.fillStyle = w.gr;
   X.beginPath();
   X.moveTo(x0, GY);
@@ -1590,7 +1698,6 @@ function ground(w) {
   X.closePath();
   X.fill();
 
-  // Embedded pebbles, roots & soil details
   for (let x = Math.floor(cam / 36) * 36; x < cam + 830; x += 36) {
     const h = Math.abs(Math.sin(x * 12.9898) * 43758.5453) % 1;
     const py = GY + 24 + (h * 42);
@@ -1605,7 +1712,6 @@ function ground(w) {
     X.fill();
   }
 
-  // Rich grass blades & tiny world-themed surface details
   for (let x = Math.floor(cam / 9) * 9; x < cam + 815; x += 9) {
     const h = 4 + (Math.abs(x * 17) % 7);
     const sway = Math.sin(tt / 28 + x * .15) * 1.6;
@@ -1616,7 +1722,6 @@ function ground(w) {
     X.lineTo(x + 5, GY + 2);
     X.fill();
 
-    // Occasional tiny blossom / crystal / rune spark on grass
     if (x % 63 == 0) {
       X.fillStyle = w.gl;
       X.beginPath();
@@ -1625,7 +1730,6 @@ function ground(w) {
     }
   }
 
-  // Soft glowing rim along the top edge
   glow(w.gl, 12);
   X.fillStyle = w.gl;
   X.fillRect(cam, GY, 800, 2.5);
@@ -1641,7 +1745,6 @@ function drawPlatform(p, w) {
   X.lineCap = "round";
 
   if (WI == 0) {
-    // Enchanted Forest: Mossy wooden log platform with hanging vines & bark rings
     X.fillStyle = "#59381e";
     X.strokeStyle = "#2b190b";
     X.lineWidth = 2;
@@ -1650,7 +1753,6 @@ function drawPlatform(p, w) {
     X.fill();
     X.stroke();
 
-    // Wood grain lines
     X.strokeStyle = "#7a502e";
     X.lineWidth = 1.5;
     X.beginPath();
@@ -1658,7 +1760,6 @@ function drawPlatform(p, w) {
     X.moveTo(x + 24, y + 14); X.lineTo(x + pw - 10, y + 14);
     X.stroke();
 
-    // Log end-cap rings
     X.fillStyle = "#b58354";
     X.beginPath();
     X.arc(x + pw - 7, y + 11, 6, 0, 7);
@@ -1669,7 +1770,6 @@ function drawPlatform(p, w) {
     X.arc(x + pw - 7, y + 11, 3, 0, 7);
     X.stroke();
 
-    // Hanging vines
     X.strokeStyle = "#48a85a";
     X.lineWidth = 2.2;
     for (let vx = x + 16; vx < x + pw - 14; vx += 34) {
@@ -1685,7 +1785,6 @@ function drawPlatform(p, w) {
       X.fill();
     }
 
-    // Lush mossy top cap
     X.fillStyle = "#68c775";
     X.strokeStyle = "#255c32";
     X.lineWidth = 1.6;
@@ -1702,7 +1801,6 @@ function drawPlatform(p, w) {
     X.stroke();
 
   } else if (WI == 1) {
-    // Sky Ruins: Carved marble slab with gold trim & levitating rune crystal underneath
     glow("#9fe7ff", 14);
     X.fillStyle = "#7de3ff";
     X.beginPath();
@@ -1713,7 +1811,6 @@ function drawPlatform(p, w) {
     X.fill();
     X.shadowBlur = 0;
 
-    // Tapered stone base
     X.fillStyle = "#8a85a6";
     X.strokeStyle = "#3b3752";
     X.lineWidth = 2;
@@ -1726,7 +1823,6 @@ function drawPlatform(p, w) {
     X.fill();
     X.stroke();
 
-    // Top marble cap & gold inlay
     X.fillStyle = "#d9d5eb";
     X.beginPath();
     X.roundRect(x - 2, y - 2, pw + 4, 7, 3);
@@ -1736,7 +1832,6 @@ function drawPlatform(p, w) {
     X.fillRect(x + 10, y + 9, pw - 20, 2.5);
 
   } else if (WI == 2) {
-    // Dreamy Meadows: Pastel floating turf island with pink frosting drips & flowers
     X.fillStyle = "#b57643";
     X.strokeStyle = "#5e3819";
     X.lineWidth = 2;
@@ -1748,7 +1843,6 @@ function drawPlatform(p, w) {
     X.fill();
     X.stroke();
 
-    // Fluffy meadow grass + pink blossom icing
     X.fillStyle = "#b7e27c";
     X.strokeStyle = "#4d7829";
     X.lineWidth = 1.6;
@@ -1765,7 +1859,6 @@ function drawPlatform(p, w) {
     }
 
   } else if (WI == 3) {
-    // Moonlit Lake: Bioluminescent stone ledge with glowing cyan coral & crystal icicles
     glow("#7de3ff", 14);
     X.fillStyle = "#1c3663";
     X.strokeStyle = "#6ce0ff";
@@ -1786,7 +1879,6 @@ function drawPlatform(p, w) {
     X.shadowBlur = 0;
 
   } else {
-    // Forgotten Library: Floating enchanted bookshelf plank with gold filigree & candle
     glow("#ffd27a", 12);
     X.fillStyle = "#452863";
     X.strokeStyle = "#1b0d2b";
@@ -1796,13 +1888,11 @@ function drawPlatform(p, w) {
     X.fill();
     X.stroke();
 
-    // Gold trim brackets
     X.fillStyle = "#ffd27a";
     X.fillRect(x, y, pw, 3);
     X.fillRect(x + 4, y + 3, 5, 11);
     X.fillRect(x + pw - 9, y + 3, 5, 11);
 
-    // Glowing arcane underside rune
     X.fillStyle = "rgba(255, 210, 122, .65)";
     X.beginPath();
     X.arc(x + pw / 2, y + 21, 3.5, 0, 7);
@@ -1814,12 +1904,113 @@ function drawPlatform(p, w) {
   X.shadowBlur = 0;
 }
 
+/* ---------- Upgraded Dimensional Portal ---------- */
+function drawPortal(x, w, unlocked) {
+  const cy = GY - 72;
+  X.save();
+  X.translate(x, cy);
+  X.lineJoin = "round";
+  X.lineCap = "round";
+
+  // Stone altar base
+  X.fillStyle = "#2b2142";
+  X.strokeStyle = "#140d24";
+  X.lineWidth = 2.5;
+  X.beginPath();
+  X.roundRect(-42, 62, 84, 12, 4);
+  X.roundRect(-34, 52, 68, 12, 4);
+  X.fill();
+  X.stroke();
+
+  // Carved stone arch pillars
+  X.fillStyle = "#3c2f59";
+  X.beginPath();
+  X.roundRect(-38, -56, 12, 110, 5);
+  X.roundRect(26, -56, 12, 110, 5);
+  X.fill();
+  X.stroke();
+
+  // Keystone arch top
+  X.beginPath();
+  X.arc(0, -54, 38, Math.PI, 0);
+  X.lineWidth = 10;
+  X.strokeStyle = "#3c2f59";
+  X.stroke();
+  X.lineWidth = 2;
+  X.strokeStyle = unlocked ? w.gl : "#5a5270";
+  X.stroke();
+
+  // Top keystone gem
+  glow(unlocked ? w.gl : "#444", unlocked ? 20 : 4);
+  X.fillStyle = unlocked ? w.gl : "#555";
+  X.beginPath();
+  X.moveTo(0, -98);
+  X.lineTo(9, -86);
+  X.lineTo(0, -74);
+  X.lineTo(-9, -86);
+  X.closePath();
+  X.fill();
+  X.shadowBlur = 0;
+
+  if (unlocked) {
+    // Swirling dimensional vortex
+    glow(w.gl, 34);
+    const vg = X.createRadialGradient(0, 0, 4, 0, 0, 54);
+    vg.addColorStop(0, "#ffffff");
+    vg.addColorStop(.45, w.gl);
+    vg.addColorStop(1, "rgba(40, 20, 90, .15)");
+    X.fillStyle = vg;
+    X.beginPath();
+    X.ellipse(0, 0, 26, 54, 0, 0, 7);
+    X.fill();
+
+    // Rotating spiral rings inside portal
+    X.strokeStyle = "#ffffff";
+    X.lineWidth = 2;
+    for (let r = 0; r < 3; r++) {
+      const a0 = tt / 10 + r * 2.1;
+      X.beginPath();
+      X.ellipse(0, 0, 10 + r * 6, 22 + r * 12, 0, a0, a0 + 2.4);
+      X.stroke();
+    }
+
+    // Orbiting energy motes
+    X.fillStyle = "#fff";
+    for (let i = 0; i < 6; i++) {
+      const a = tt / 16 + i * 1.047;
+      X.beginPath();
+      X.arc(Math.cos(a) * 32, Math.sin(a) * 56, 2.8, 0, 7);
+      X.fill();
+    }
+    X.shadowBlur = 0;
+  } else {
+    // Sealed dark barrier + padlock icon until guardian is defeated
+    X.fillStyle = "rgba(18, 12, 34, .75)";
+    X.beginPath();
+    X.ellipse(0, 0, 25, 53, 0, 0, 7);
+    X.fill();
+
+    X.strokeStyle = "#7a7094";
+    X.lineWidth = 3;
+    X.beginPath();
+    X.arc(0, -6, 8, Math.PI, 0);
+    X.stroke();
+    X.fillStyle = "#7a7094";
+    X.beginPath();
+    X.roundRect(-11, -6, 22, 18, 4);
+    X.fill();
+  }
+
+  X.restore();
+  X.shadowBlur = 0;
+}
+
 /* ---------- Geometry Dash-style level progress bar ---------- */
 function drawProgressBar() {
   const w = W[WI];
   const boss = enemies[enemies.length - 1];
   const bx = 240, by = 16, bw = 320, bh = 12;
-  const startX = 280, endX = 3000;
+  const startX = 280, endX = BOSS_X;
   const prog = boss && boss.dead
     ? 1
     : Math.max(0, Math.min(1, (P.x - startX) / (endX - startX)));
@@ -1828,7 +2019,6 @@ function drawProgressBar() {
   X.lineJoin = "round";
   X.lineCap = "round";
 
-  // Dark pill track
   X.fillStyle = "rgba(18, 10, 38, .78)";
   X.strokeStyle = "rgba(255, 255, 255, .35)";
   X.lineWidth = 2;
@@ -1837,7 +2027,6 @@ function drawProgressBar() {
   X.fill();
   X.stroke();
 
-  // Glowing fill bar
   if (prog > 0) {
     const fg = X.createLinearGradient(bx, by, bx + bw, by);
     fg.addColorStop(0, "#ff7eb6");
@@ -1850,25 +2039,21 @@ function drawProgressBar() {
     X.shadowBlur = 0;
   }
 
-  // Bench checkpoint notch on the bar
-  const benchProg = Math.max(0, Math.min(1, (2760 - startX) / (endX - startX)));
+  const benchProg = Math.max(0, Math.min(1, (BENCH_X - startX) / (endX - startX)));
   const bpx = bx + bw * benchProg;
   X.fillStyle = "#fff";
   X.fillRect(bpx - 1, by - 2, 2, bh + 4);
 
-  // Moving mini bunny head marker
   const mx = bx + 4 + (bw - 8) * prog;
   const my = by + bh / 2;
   X.fillStyle = "#ffffff";
   X.strokeStyle = "#3c2b5e";
   X.lineWidth = 1.4;
-  // Tiny bunny ears
   X.beginPath();
   X.ellipse(mx - 2.2, my - 7.5, 1.6, 4, -.15, 0, 7);
   X.ellipse(mx + 2.2, my - 7.5, 1.6, 4, .15, 0, 7);
   X.fill();
   X.stroke();
-  // Tiny bunny head
   X.beginPath();
   X.arc(mx, my - 1.5, 5.2, 0, 7);
   X.fill();
@@ -1878,7 +2063,6 @@ function drawProgressBar() {
   X.arc(mx + 1.8, my - 1.8, 1.1, 0, 7);
   X.fill();
 
-  // Boss icon badge at the right end of the bar
   const endCx = bx + bw + 14;
   const endCy = by + bh / 2;
   const defeated = boss && boss.dead;
@@ -1893,7 +2077,6 @@ function drawProgressBar() {
   X.shadowBlur = 0;
 
   if (defeated) {
-    // Green checkmark when boss is defeated
     X.strokeStyle = "#7aff9e";
     X.lineWidth = 2.6;
     X.beginPath();
@@ -1902,9 +2085,7 @@ function drawProgressBar() {
     X.lineTo(endCx + 6, endCy - 4.5);
     X.stroke();
   } else {
-    // Horned boss skull icon
     X.fillStyle = "#ffe6ee";
-    // Horns
     X.beginPath();
     X.moveTo(endCx - 6, endCy - 4);
     X.lineTo(endCx - 9, endCy - 9.5);
@@ -1913,12 +2094,10 @@ function drawProgressBar() {
     X.lineTo(endCx + 9, endCy - 9.5);
     X.lineTo(endCx + 3, endCy - 6);
     X.fill();
-    // Skull cranium & jaw
     X.beginPath();
     X.arc(endCx, endCy - 1.5, 6, 0, 7);
     X.fill();
     X.fillRect(endCx - 3.5, endCy + 2, 7, 4);
-    // Glowing red eyes
     X.fillStyle = "#ff2a55";
     X.beginPath();
     X.arc(endCx - 2.3, endCy - 1.5, 1.4, 0, 7);
@@ -2063,14 +2242,12 @@ function drawWorld() {
   for (const c of coins) if (!c.got) { glow("#ffd84d", 12); X.fillStyle = "#ffd84d"; X.beginPath(); X.ellipse(c.x, c.y + Math.sin(tt / 15 + c.x) * 3, 7 * Math.abs(Math.cos(tt / 20 + c.x) * .6 + .4), 8, 0, 0, 7); X.fill(); X.shadowBlur = 0; }
   enemies.forEach(e => { if (!e.dead) { X.save(); X.translate(e.x, GY); if (e.boss) bossDraw(e); else enemy(e); X.restore(); } });
   const bd = enemies[enemies.length - 1].dead;
-  glow(bd ? w.gl : "#555", bd ? 40 : 8); X.strokeStyle = bd ? w.gl : "#666"; X.lineWidth = 6; X.beginPath(); X.ellipse(3230, GY - 60, 30, 60, 0, 0, 7); X.stroke();
-  if (bd) { X.fillStyle = w.gl; X.globalAlpha = .3 + .2 * Math.sin(tt / 10); X.fill(); X.globalAlpha = 1; }
-  X.shadowBlur = 0;
+  drawPortal(PORTAL_X, w, bd);
   drawFx(); monica(P.x, inSit ? P.y - 20 : P.y, P.face, { sit: inSit }); book(P.x - P.face * 26, P.y - 8);
   if (inSit) bench(sitB.x, 1);
   if (S == "play") {
     for (const b of benches) if (Math.abs(P.x + 14 - b.x - 26) < 60) {
-      X.fillStyle = "#fff"; glow("#000", 6); X.font = "bold 15px " + FONT; X.fillText("Press E to sit", b.x - 8, GY - 80); X.shadowBlur = 0;
+      X.fillStyle = "#fff"; glow("#000", 6); X.font = "bold 15px " + FONT; X.fillText("Press E to sit (Save)", b.x - 22, GY - 80); X.shadowBlur = 0;
     }
   }
   for (const p of parts) { X.globalAlpha = Math.min(1, p.life / 45); X.fillStyle = p.c; X.fillRect(p.x, p.y, 5, 5); }
@@ -2078,7 +2255,7 @@ function drawWorld() {
   drawProgressBar();
   X.font = "bold 22px " + FONT; X.fillStyle = "#ff4f86"; glow("#000", 4); X.fillText("♥".repeat(P.hp) + "♡".repeat(P.max - P.hp), 14, 32);
   X.font = "bold 16px " + FONT; X.fillStyle = "#fff"; X.textAlign = "right"; X.fillText("Chapter " + (WI + 1) + " · " + w.n, 786, 28); X.textAlign = "left"; X.shadowBlur = 0;
-  if (S == "sit" && !paused) bubble(P.x - cam + 14, P.y - 62, sitT < 50 ? "Resting…" : "Healed and saved. S: shop · E: stand");
+  if (S == "sit" && !paused) bubble(P.x - cam + 14, P.y - 62, sitT < 50 ? "Saving checkpoint…" : "Checkpoint saved! S: shop · E: stand");
   if (titleT > 0) {
     titleT--; X.globalAlpha = Math.min(1, titleT / 40); X.textAlign = "center"; glow(w.gl, 24); X.fillStyle = "#fff"; X.font = "bold 46px Georgia,serif"; X.fillText(w.n, 400, 170);
     X.font = "18px " + FONT; X.fillText("Chapter " + (WI + 1) + " of 5", 400, 200); X.textAlign = "left"; X.globalAlpha = 1; X.shadowBlur = 0;
@@ -2095,7 +2272,9 @@ function loop(now) {
   if (!lastT) lastT = now;
   if (now - lastT < 15.5) return;
   lastT = now - (now - lastT) % 16.666;
-  X.setTransform(K, 0, 0, K, 0, 0); if (wrap.dataset.s != S) wrap.dataset.s = S; tt++; update();
+  X.setTransform(K, 0, 0, K, 0, 0);
+  if (wrap.dataset.s != S) { wrap.dataset.s = S; ensureAdminUI(); }
+  tt++; update();
   const sv = S == "sit" && sitT >= 50 && !paused; if (sv != shopVis) { shopVis = sv; $("shopS").hidden = !sv; }
   if (S == "title" || S == "login" || (S == "shop" && shopFrom == "title")) drawTitle();
   else if (introOn) drawIntro();
