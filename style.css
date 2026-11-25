@@ -394,11 +394,72 @@ body.mobile #bhint {
 
 #shop {
   top: 3%;
-  bottom: auto;
-  max-height: 94%;
-  overflow: auto;
+  bottom: 3%;
+  left: 3%;
+  right: 3%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   text-align: left;
+  padding: .75em 1em;
+}
+
+.shop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .8em;
+  padding-bottom: .5em;
+  border-bottom: 1px solid rgba(155, 93, 229, .35);
+  flex: none;
+}
+
+.shop-coins {
+  font-weight: 700;
+  color: #ffd27a;
+  font-size: .95em;
+}
+
+#shopPrev {
+  height: 5.4em;
+  width: auto;
+  border-radius: .7em;
+  background: rgba(12, 6, 26, .45);
+  border: 1px solid rgba(155, 93, 229, .45);
+  box-shadow: none;
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .9em;
+  flex: 1;
+  min-height: 0;
+  margin-top: .5em;
+}
+
+.shop-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: rgba(155, 93, 229, .08);
+  border: 1px solid rgba(155, 93, 229, .28);
+  border-radius: .85em;
+  padding: .5em .65em;
+}
+
+.shop-col h4 {
+  margin: 0 0 .4em;
+  color: var(--accent);
+  font-size: 1.05em;
+  flex: none;
+}
+
+.shop-list {
+  overflow-y: auto;
   touch-action: pan-y;
+  padding-right: .2em;
+  flex: 1;
 }
 
 .row {
@@ -406,12 +467,56 @@ body.mobile #bhint {
   justify-content: space-between;
   align-items: center;
   gap: .5em;
-  padding: .3em 0;
-  border-bottom: 1px solid rgba(155, 93, 229, .25);
+  padding: .4em .45em;
+  border-radius: .6em;
+  border-bottom: 1px solid rgba(155, 93, 229, .2);
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.row:hover, .row.active-prev {
+  background: rgba(155, 93, 229, .22);
+}
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  gap: .55em;
+  min-width: 0;
+}
+
+.sw {
+  flex: none;
+  width: 1.4em;
+  height: 1.4em;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.sw-book {
+  border-radius: .3em;
+  width: 1.25em;
+  height: 1.5em;
 }
 
 .row small {
-  opacity: .75;
+  opacity: .78;
+  display: inline-block;
+  line-height: 1.2;
+}
+
+.row button {
+  flex: none;
+  padding: .4em .85em;
+  font-size: .88em;
+}
+
+.shop-msg {
+  margin: .35em 0 0;
+  text-align: center;
+  color: #ff6b96;
+  font-weight: 700;
+  flex: none;
 }
 
 #shopS {
