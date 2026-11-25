@@ -134,27 +134,27 @@ const TA = {
 };
 const W = [
   {
-    n: "Enchanted Forest", sky: ["#cdeedd", "#f6d9ee"], hill: ["#a9dcc0", "#8ccfae"], tr: "#6fb98f", gr: "#7ccf86", gd: "#5aa874", pb: "#8a5e3a", gl: "#ff9ad5", dark: 0, deco: "mush", top: "c", pool: ["lady", "rock"], mt: [0, 0],
+    n: "Enchanted Forest", sky: ["#cdeedd", "#f6d9ee"], hill: ["#a9dcc0", "#8ccfae"], tr: "#6fb98f", gr: "#68c775", gd: "#4b9e63", soil: "#6e472b", pb: "#8a5e3a", gl: "#ff9ad5", dark: 0, deco: "mush", top: "c", pool: ["lady", "rock"], mt: [0, 0],
     out: "The Beetle Guardian is calm again. A portal opens to the Sky Ruins.", in: [],
     boss: { n: "Forest Beetle Guardian", k: "beetle", t: 2, hp: 5, ey: -52, ec: "#fff27a", taunt: "Nobody crosses my forest alive!", win: [["Monica", "I beat a beetle with calculus. Add that to my résumé."]] }
   },
   {
-    n: "Sky Ruins", sky: ["#7fb8ff", "#fbe3d0"], hill: ["#cfd9f2", "#b6c3e6"], tr: "#a9b5d6", gr: "#c6c2d9", gd: "#9a96b8", pb: "#8e89a8", gl: "#9fe7ff", dark: .12, deco: "crystal", top: "p", pool: ["rock", "bee"], mt: [0, 1],
+    n: "Sky Ruins", sky: ["#7fb8ff", "#fbe3d0"], hill: ["#cfd9f2", "#b6c3e6"], tr: "#a9b5d6", gr: "#c6c2d9", gd: "#9a96b8", soil: "#6d698a", pb: "#8e89a8", gl: "#9fe7ff", dark: .12, deco: "crystal", top: "p", pool: ["rock", "bee"], mt: [0, 1],
     out: "The Golem crumbles into pebbles. The next portal hums.", in: [["Spellbook", "Sky Ruins. Mind the drop."], ["Monica", "Why does everything float here?"]],
     boss: { n: "Cloudstone Golem", k: "golem", t: 2, hp: 5, ey: -150, ec: "#ff3a3a", taunt: "Stone does not forget. Answer me!", win: [["Monica", "Rocks again. Why is it always rocks?"]] }
   },
   {
-    n: "Dreamy Meadows", sky: ["#ffc9e6", "#cdb8ff"], hill: ["#f0b6e8", "#d6a3f0"], tr: "#e48fd0", gr: "#b7e27c", gd: "#8fc45a", pb: "#c9894f", gl: "#ffe27a", dark: .1, deco: "flower", top: "c", pool: ["bee", "mush"], mt: [1, 1],
+    n: "Dreamy Meadows", sky: ["#ffc9e6", "#cdb8ff"], hill: ["#f0b6e8", "#d6a3f0"], tr: "#e48fd0", gr: "#b7e27c", gd: "#8fc45a", soil: "#9c623e", pb: "#c9894f", gl: "#ffe27a", dark: .1, deco: "flower", top: "c", pool: ["bee", "mush"], mt: [1, 1],
     out: "The Bloom wilts into petals. Beyond it, the lake glows.", in: [["Spellbook", "Dreamy Meadows. Pretty flowers, ugly teeth."], ["Monica", "So pretty. So suspicious."]],
     boss: { n: "Grumpy Bloom", k: "bloom", t: 3, hp: 6, ey: -140, ec: "#fff", taunt: "I woke up hungry. Solve it or be lunch!", win: [["Monica", "We have a lot in common, flower. Rude."]] }
   },
   {
-    n: "Moonlit Lake", sky: ["#0d1745", "#2a3d8f"], hill: ["#1d2f73", "#162456"], tr: "#10205a", gr: "#2a5fa0", gd: "#1a3a70", pb: "#32508f", gl: "#7de3ff", dark: .55, deco: "lily", top: "p", pool: ["mush", "rock"], mt: [1, 1],
+    n: "Moonlit Lake", sky: ["#0d1745", "#2a3d8f"], hill: ["#1d2f73", "#162456"], tr: "#10205a", gr: "#2a5fa0", gd: "#1a3a70", soil: "#102447", pb: "#32508f", gl: "#7de3ff", dark: .55, deco: "lily", top: "p", pool: ["mush", "rock"], mt: [1, 1],
     out: "The Spirit sinks into the water. One last portal remains.", in: [["Spellbook", "Moonlit Lake. Something old lives in the water."], ["Monica", "It’s dark. I don’t love dark."]],
     boss: { n: "Moonwater Spirit", k: "spirit", t: 4, hp: 7, ey: -95, ec: "#7de3ff", taunt: "The chain runs deep, little bunny.", win: [["Spellbook", "Chain rule mastered."], ["Monica", "I felt that one in my soul."]] }
   },
   {
-    n: "Forgotten Library", sky: ["#170c2e", "#3b1f5e"], hill: ["#2a1748", "#1f1038"], tr: "#241243", gr: "#4b3566", gd: "#35244d", pb: "#5a3d78", gl: "#ffd27a", dark: .65, deco: "book", top: "p", pool: ["bee", "rock", "mush", "lady"], mt: [1, 1],
+    n: "Forgotten Library", sky: ["#170c2e", "#3b1f5e"], hill: ["#2a1748", "#1f1038"], tr: "#241243", gr: "#4b3566", gd: "#35244d", soil: "#211433", pb: "#5a3d78", gl: "#ffd27a", dark: .65, deco: "book", top: "p", pool: ["bee", "rock", "mush", "lady"], mt: [1, 1],
     out: "", in: [["Spellbook", "The Forgotten Library. The lost magic is here."], ["Monica", "Please don’t let there be a quiz."], ["Spellbook", "There is always a quiz."]],
     boss: { n: "Ancient Owl Scholar", k: "owl", t: 5, hp: 8, ey: -132, ec: "#ff9a1a", taunt: "Show me everything you have learned.", win: [] }
   }
@@ -257,10 +257,10 @@ function goMenu() {
 }
 function load(wi, fs) {
   WI = wi; const w = W[wi]; P.x = fs && save.bx != null ? save.bx : 280; P.y = GY - 40; P.vx = P.vy = 0; P.on = false; P.face = 1; lastB = P.x; invuln = 0; candE = null;
-  plats = [600, 1100, 1600, 2050, 2420].map(x => ({ x: x + rnd(-60, 60), y: rnd(255, 300), w: rnd(115, 170) }));
+  plats = [600, 1100, 1600, 2050, 2420].map((x, idx) => ({ x: x + rnd(-60, 60), y: rnd(255, 300), w: rnd(120, 175), seed: idx * 17 + wi * 31 }));
   benches = [{ x: 2760 }];
   coins = []; for (let i = 0; i < 32; i++) if (Math.random() < .75) coins.push({ x: 250 + i * 92 + rnd(-10, 10), y: GY - 26 - (Math.random() < .25 ? 65 : 0) });
-  plats.forEach(p => { for (let k = 0; k < 3; k++) coins.push({ x: p.x + 20 + k * 35, y: p.y - 24 }); });
+  plats.forEach(p => { for (let k = 0; k < 3; k++) coins.push({ x: p.x + 22 + k * 35, y: p.y - 24 }); });
   const n = rnd(2, 3), xs = [900, 1650, 2300].slice(0, n).map(x => x + rnd(-80, 120));
   enemies = xs.map(x => { const k = pick(w.pool); return { x, k, t: rnd(w.mt[0], w.mt[1]), q: 3, n: NM[k], taunt: TA[k], ph: Math.random() * 6, skip: false }; });
   enemies.push({ x: 3000, boss: 1, q: w.boss.hp, ph: 0, skip: false, ...w.boss });
@@ -901,7 +901,6 @@ function enemy(e) {
 
   if (k == "lady") {
     const walk = Math.sin(tt / 6 + e.ph) * 2.5;
-    // Little scuttling legs
     X.strokeStyle = "#1c1024";
     X.lineWidth = 3;
     for (const [lx, off] of [[-16, walk], [-3, -walk], [10, walk]]) {
@@ -910,7 +909,6 @@ function enemy(e) {
       X.lineTo(lx - 3, -1 + off * .4);
       X.stroke();
     }
-    // Shell
     glow("#ff3b5c", 14);
     X.fillStyle = "#c91834";
     X.strokeStyle = "#2a0a18";
@@ -922,13 +920,11 @@ function enemy(e) {
     X.stroke();
     X.shadowBlur = 0;
 
-    // Glossy shell highlight
     X.fillStyle = "rgba(255, 180, 200, .32)";
     X.beginPath();
     X.ellipse(-7, -26 + b, 11, 4.5, -.25, 0, 7);
     X.fill();
 
-    // Dark spots & dorsal spikes
     X.fillStyle = "#220c1a";
     for (const [sx, sy, sr] of [[-14, -21, 3.6], [-2, -26, 4.2], [9, -20, 3.4]]) {
       X.beginPath();
@@ -944,7 +940,6 @@ function enemy(e) {
       X.fill();
     }
 
-    // Head & curled antennae
     X.fillStyle = "#24142e";
     X.strokeStyle = "#120818";
     X.lineWidth = 1.8;
@@ -967,7 +962,6 @@ function enemy(e) {
     X.arc(31, -30 + b, 2.2, 0, 7);
     X.fill();
 
-    // Eyes, grumpy brow & fangs
     eyes(22, -14 + b, "#ffe047", 3.6, 3.2);
     X.strokeStyle = "#ff4f79";
     X.lineWidth = 2;
@@ -979,7 +973,6 @@ function enemy(e) {
 
   } else if (k == "rock") {
     const slam = Math.sin(tt / 10 + e.ph) * 2.5;
-    // Heavy stone torso
     glow("#ff6a1a", 14);
     X.fillStyle = "#4b435c";
     X.strokeStyle = "#1e1929";
@@ -997,7 +990,6 @@ function enemy(e) {
     X.stroke();
     X.shadowBlur = 0;
 
-    // Highlight facet
     X.fillStyle = "#685e7d";
     X.beginPath();
     X.moveTo(-14, -44 + b * .5);
@@ -1007,7 +999,6 @@ function enemy(e) {
     X.closePath();
     X.fill();
 
-    // Glowing lava cracks
     glow("#ff7b29", 10);
     X.strokeStyle = "#ff8c24";
     X.lineWidth = 2.2;
@@ -1016,7 +1007,6 @@ function enemy(e) {
     X.stroke();
     X.shadowBlur = 0;
 
-    // Floating chunky fists
     for (const [fx, fy] of [[-31, -13 + slam], [32, -13 - slam]]) {
       X.fillStyle = "#3a3347";
       X.strokeStyle = "#1e1929";
@@ -1027,7 +1017,6 @@ function enemy(e) {
       X.stroke();
     }
 
-    // Angry brow, eyes & jagged mouth
     eyes(1, -29 + b * .4, "#ff4a2a", 8.5, 3.8);
     X.fillStyle = "#2b2536";
     X.beginPath();
@@ -1039,7 +1028,6 @@ function enemy(e) {
   } else if (k == "bee") {
     const y = -50 + b * 2.2;
     const flap = Math.sin(tt * 1.1 + e.ph) * 4;
-    // Fluttering wings
     X.fillStyle = "rgba(225, 242, 255, .75)";
     X.strokeStyle = "#8cb8de";
     X.lineWidth = 1.4;
@@ -1049,7 +1037,6 @@ function enemy(e) {
     X.fill();
     X.stroke();
 
-    // Sharp stinger
     X.fillStyle = "#2b1d38";
     X.beginPath();
     X.moveTo(-18, y - 3);
@@ -1058,7 +1045,6 @@ function enemy(e) {
     X.closePath();
     X.fill();
 
-    // Plump striped body
     glow("#ffcf33", 12);
     X.fillStyle = "#ffd438";
     X.strokeStyle = "#2b1d38";
@@ -1069,7 +1055,6 @@ function enemy(e) {
     X.stroke();
     X.shadowBlur = 0;
 
-    // Dark stripes (clipped inside body)
     X.save();
     X.beginPath();
     X.ellipse(0, y, 19, 13, 0, 0, 7);
@@ -1079,7 +1064,6 @@ function enemy(e) {
     X.fillRect(-2, y - 15, 5.5, 30);
     X.restore();
 
-    // Dangling feet
     X.strokeStyle = "#261833";
     X.lineWidth = 2;
     X.beginPath();
@@ -1087,7 +1071,6 @@ function enemy(e) {
     X.moveTo(4, y + 13); X.lineTo(2, y + 20 - b * .4);
     X.stroke();
 
-    // Antennae, eyes & grin
     X.beginPath();
     X.moveTo(10, y - 12); X.quadraticCurveTo(14, y - 22, 19, y - 20);
     X.moveTo(14, y - 11); X.quadraticCurveTo(19, y - 20, 23, y - 17);
@@ -1103,7 +1086,6 @@ function enemy(e) {
     teeth(12, y + 3, 10, 3, 5);
 
   } else {
-    // Bouncy Mushroom with squash & stretch
     const hop = Math.max(0, Math.sin(tt / 9 + e.ph));
     const j = hop * 14;
     const sqX = hop > .1 ? .92 : 1.07;
@@ -1113,7 +1095,6 @@ function enemy(e) {
     X.translate(0, -j);
     X.scale(sqX, sqY);
 
-    // Chubby stem
     X.fillStyle = "#f2e6d8";
     X.strokeStyle = "#2d163b";
     X.lineWidth = 2;
@@ -1122,14 +1103,12 @@ function enemy(e) {
     X.fill();
     X.stroke();
 
-    // Cute stubby arms
     X.beginPath();
     X.ellipse(-14, -14, 4, 3, -.4, 0, 7);
     X.ellipse(14, -14, 4, 3, .4, 0, 7);
     X.fill();
     X.stroke();
 
-    // Spotted poison cap
     glow("#b84dff", 16);
     X.fillStyle = "#69229c";
     X.strokeStyle = "#2d163b";
@@ -1142,7 +1121,6 @@ function enemy(e) {
     X.stroke();
     X.shadowBlur = 0;
 
-    // Glowing neon spots
     glow("#7aff8a", 8);
     X.fillStyle = "#7aff8a";
     for (const [sx, sy, sr] of [[-14, -37, 4.5], [2, -42, 5.2], [16, -35, 4]]) {
@@ -1152,7 +1130,6 @@ function enemy(e) {
     }
     X.shadowBlur = 0;
 
-    // Goofy eyes & chomping mouth
     eyes(0, -19, "#6dff7a", 6.5, 3.6);
     X.fillStyle = "#220b30";
     X.beginPath();
@@ -1172,7 +1149,6 @@ function bossDraw(e) {
   X.lineCap = "round";
 
   if (k == "beetle") {
-    // Segmented armored legs
     X.strokeStyle = "#112b1d";
     X.lineWidth = 6;
     for (const [lx, dx] of [[-52, -16], [-28, -10], [28, 10], [52, 16]]) {
@@ -1184,7 +1160,6 @@ function bossDraw(e) {
       X.stroke();
     }
 
-    // Serrated dorsal horns
     X.fillStyle = "#0e291b";
     X.strokeStyle = "#07170e";
     X.lineWidth = 2;
@@ -1199,7 +1174,6 @@ function bossDraw(e) {
       X.stroke();
     }
 
-    // Giant emerald carapace
     glow("#45e685", 20);
     X.fillStyle = "#1b5436";
     X.strokeStyle = "#081c11";
@@ -1213,7 +1187,6 @@ function bossDraw(e) {
     X.stroke();
     X.shadowBlur = 0;
 
-    // Shell highlight & gold center seam
     X.fillStyle = "#28754c";
     X.beginPath();
     X.ellipse(-26, -84, 32, 14, -.35, 0, 7);
@@ -1226,7 +1199,6 @@ function bossDraw(e) {
     X.lineTo(0, -34);
     X.stroke();
 
-    // Giant ivory pincers
     const pinch = Math.sin(tt / 12) * 4;
     X.fillStyle = "#f5edd6";
     X.strokeStyle = "#2b2218";
@@ -1247,13 +1219,11 @@ function bossDraw(e) {
     X.fill();
     X.stroke();
 
-    // Glowing eyes & fangs
     eyes(0, -54, "#fff27a", 22, 6);
     teeth(0, -36, 56, 7, 10);
 
   } else if (k == "golem") {
     const hover = Math.sin(tt / 15) * 4;
-    // Pillar legs
     X.fillStyle = "#3f3b54";
     X.strokeStyle = "#191626";
     X.lineWidth = 3;
@@ -1264,7 +1234,6 @@ function bossDraw(e) {
       X.stroke();
     }
 
-    // Floating heavy arms
     for (const [ax, dir] of [[-86, -1], [58, 1]]) {
       X.save();
       X.translate(ax + 14, -90 + hover);
@@ -1279,7 +1248,6 @@ function bossDraw(e) {
       X.restore();
     }
 
-    // Massive chest block
     glow("#ff6a1a", 18);
     X.fillStyle = "#565170";
     X.strokeStyle = "#191626";
@@ -1290,7 +1258,6 @@ function bossDraw(e) {
     X.stroke();
     X.shadowBlur = 0;
 
-    // Glowing magma core in chest
     glow("#ff5e1a", 24);
     X.fillStyle = "#ff7b29";
     X.beginPath();
@@ -1306,7 +1273,6 @@ function bossDraw(e) {
     X.fill();
     X.shadowBlur = 0;
 
-    // Stone head & crown horns
     X.fillStyle = "#625c7d";
     X.strokeStyle = "#191626";
     X.lineWidth = 3;
@@ -1327,7 +1293,6 @@ function bossDraw(e) {
 
   } else if (k == "bloom") {
     const sway = Math.sin(tt / 16) * 4;
-    // Thorny stem & leaves
     X.fillStyle = "#237a42";
     X.strokeStyle = "#0e381d";
     X.lineWidth = 2.6;
@@ -1342,7 +1307,6 @@ function bossDraw(e) {
     X.fill();
     X.stroke();
 
-    // Outer petal ring
     glow("#d94bff", 24);
     for (let i = 0; i < 10; i++) {
       const a = i / 10 * Math.PI * 2 + tt / 90;
@@ -1360,7 +1324,6 @@ function bossDraw(e) {
     }
     X.shadowBlur = 0;
 
-    // Giant flytrap head & chomping jaws
     X.fillStyle = "#851259";
     X.strokeStyle = "#380726";
     X.lineWidth = 3;
@@ -1374,7 +1337,6 @@ function bossDraw(e) {
     X.ellipse(sway, -122, 46, 20 + pulse * 3, 0, 0, 7);
     X.fill();
 
-    // Upper & lower fangs
     teeth(sway, -138, 84, 8, 11);
     X.fillStyle = "#fff";
     X.strokeStyle = "#2b1630";
@@ -1393,7 +1355,6 @@ function bossDraw(e) {
 
   } else if (k == "spirit") {
     const floatY = Math.sin(tt / 14) * 6;
-    // Swirling spectral cloak
     glow("#5ce1ff", 28);
     const g = X.createLinearGradient(0, -190, 0, 0);
     g.addColorStop(0, "rgba(18, 88, 138, .96)");
@@ -1409,14 +1370,12 @@ function bossDraw(e) {
     X.quadraticCurveTo(-78, -115 + floatY, 0, -188 + floatY);
     X.fill();
 
-    // Floating moon halo behind head
     X.strokeStyle = "rgba(159, 231, 255, .65)";
     X.lineWidth = 3;
     X.beginPath();
     X.arc(0, -110 + floatY, 44, 0, 7);
     X.stroke();
 
-    // Orbiting spirit wisps
     X.fillStyle = "#b8f2ff";
     for (let i = 0; i < 3; i++) {
       const a = tt / 22 + i * 2.09;
@@ -1426,7 +1385,6 @@ function bossDraw(e) {
     }
     X.shadowBlur = 0;
 
-    // Hollow face & glowing soul eyes
     X.fillStyle = "#041224";
     X.beginPath();
     X.ellipse(-18, -104 + floatY, 11, 15, -.1, 0, 7);
@@ -1441,9 +1399,7 @@ function bossDraw(e) {
     teeth(0, -72 + floatY, 36, 5, 8);
 
   } else {
-    // Ancient Owl Scholar
     const flap = Math.sin(tt / 14) * 10;
-    // Layered wings
     glow("#ff9a1a", 22);
     X.fillStyle = "#36200d";
     X.strokeStyle = "#170c04";
@@ -1465,7 +1421,6 @@ function bossDraw(e) {
     X.stroke();
     X.shadowBlur = 0;
 
-    // Plump feathered body & belly crest
     X.fillStyle = "#4a2e14";
     X.strokeStyle = "#170c04";
     X.lineWidth = 3;
@@ -1479,7 +1434,6 @@ function bossDraw(e) {
     X.ellipse(0, -56, 36, 44, 0, 0, 7);
     X.fill();
 
-    // Feather chevrons on belly
     X.strokeStyle = "#3b230e";
     X.lineWidth = 2.2;
     for (const [fx, fy] of [[-14, -70], [14, -70], [0, -54], [-14, -38], [14, -38]]) {
@@ -1490,7 +1444,6 @@ function bossDraw(e) {
       X.stroke();
     }
 
-    // Owl head & ear tufts
     X.fillStyle = "#4a2e14";
     X.strokeStyle = "#170c04";
     X.lineWidth = 3;
@@ -1505,7 +1458,6 @@ function bossDraw(e) {
     X.fill();
     X.stroke();
 
-    // Facial disc & scholar spectacles
     X.fillStyle = "#694321";
     X.beginPath();
     X.arc(-19, -132, 17, 0, 7);
@@ -1522,7 +1474,6 @@ function bossDraw(e) {
     X.arc(19, -132, 14, 0, 7);
     X.stroke();
 
-    // Hooked beak & sharp talons
     X.fillStyle = "#ff9a1a";
     X.strokeStyle = "#170c04";
     X.lineWidth = 2;
@@ -1608,12 +1559,377 @@ function bg(w) {
     }
   }
 }
+
+/* ---------- detailed ground & floating parkour islands ---------- */
 function ground(w) {
-  X.fillStyle = w.gr; X.fillRect(cam, GY, 800, 90); X.fillStyle = w.gd; X.fillRect(cam, GY + 30, 800, 60); X.fillStyle = w.gr;
-  for (let x = Math.floor(cam / 7) * 7; x < cam + 810; x += 7) { const h = 5 + (x * 13 % 7); X.beginPath(); X.moveTo(x, GY + 1); X.lineTo(x + 2, GY - h - Math.sin(tt / 30 + x) * 1.5); X.lineTo(x + 4, GY + 1); X.fill(); }
-  X.fillStyle = "rgba(0,0,0,.12)"; for (let x = Math.floor(cam / 31) * 31; x < cam + 810; x += 31) X.fillRect(x, GY + 14 + (x * 7 % 30), 6, 3);
-  glow(w.gl, 14); X.fillStyle = w.gl; X.fillRect(cam, GY, 800, 3); X.shadowBlur = 0;
+  const x0 = Math.floor(cam / 40) * 40 - 40, x1 = cam + 860;
+
+  // Deep soil base
+  X.fillStyle = w.soil || "#5c3b24";
+  X.fillRect(cam - 2, GY, 804, 90);
+
+  // Wavy sub-crust layer
+  X.fillStyle = w.gd;
+  X.beginPath();
+  X.moveTo(x0, GY);
+  for (let x = x0; x <= x1; x += 20) {
+    X.lineTo(x, GY + 24 + Math.sin(x / 45) * 6 + Math.cos(x / 19) * 3);
+  }
+  X.lineTo(x1, GY);
+  X.closePath();
+  X.fill();
+
+  // Top lush turf strip with scalloped overhang
+  X.fillStyle = w.gr;
+  X.beginPath();
+  X.moveTo(x0, GY);
+  for (let x = x0; x <= x1; x += 14) {
+    X.lineTo(x, GY + 11 + Math.sin(x / 23) * 3.5);
+  }
+  X.lineTo(x1, GY);
+  X.closePath();
+  X.fill();
+
+  // Embedded pebbles, roots & soil details
+  for (let x = Math.floor(cam / 36) * 36; x < cam + 830; x += 36) {
+    const h = Math.abs(Math.sin(x * 12.9898) * 43758.5453) % 1;
+    const py = GY + 24 + (h * 42);
+    const rx = 5 + (h * 7);
+    X.fillStyle = "rgba(0,0,0,.18)";
+    X.beginPath();
+    X.ellipse(x + (h * 14), py, rx, rx * .55, h, 0, 7);
+    X.fill();
+    X.fillStyle = "rgba(255,255,255,.07)";
+    X.beginPath();
+    X.ellipse(x + (h * 14) - 1, py - 1.5, rx * .6, rx * .25, h, 0, 7);
+    X.fill();
+  }
+
+  // Rich grass blades & tiny world-themed surface details
+  for (let x = Math.floor(cam / 9) * 9; x < cam + 815; x += 9) {
+    const h = 4 + (Math.abs(x * 17) % 7);
+    const sway = Math.sin(tt / 28 + x * .15) * 1.6;
+    X.fillStyle = (x % 18 == 0) ? w.gr : w.gd;
+    X.beginPath();
+    X.moveTo(x - 1, GY + 2);
+    X.lineTo(x + 2 + sway, GY - h);
+    X.lineTo(x + 5, GY + 2);
+    X.fill();
+
+    // Occasional tiny blossom / crystal / rune spark on grass
+    if (x % 63 == 0) {
+      X.fillStyle = w.gl;
+      X.beginPath();
+      X.arc(x + 2 + sway, GY - h - 1, 2.2, 0, 7);
+      X.fill();
+    }
+  }
+
+  // Soft glowing rim along the top edge
+  glow(w.gl, 12);
+  X.fillStyle = w.gl;
+  X.fillRect(cam, GY, 800, 2.5);
+  X.shadowBlur = 0;
 }
+
+function drawPlatform(p, w) {
+  const x = p.x, y = p.y, pw = p.w;
+  const bob = Math.sin(tt / 24 + (p.seed || 0)) * 2.2;
+  X.save();
+  X.translate(0, bob);
+  X.lineJoin = "round";
+  X.lineCap = "round";
+
+  if (WI == 0) {
+    // Enchanted Forest: Mossy wooden log platform with hanging vines & bark rings
+    X.fillStyle = "#59381e";
+    X.strokeStyle = "#2b190b";
+    X.lineWidth = 2;
+    X.beginPath();
+    X.roundRect(x, y + 3, pw, 16, 8);
+    X.fill();
+    X.stroke();
+
+    // Wood grain lines
+    X.strokeStyle = "#7a502e";
+    X.lineWidth = 1.5;
+    X.beginPath();
+    X.moveTo(x + 12, y + 9); X.lineTo(x + pw - 16, y + 9);
+    X.moveTo(x + 24, y + 14); X.lineTo(x + pw - 10, y + 14);
+    X.stroke();
+
+    // Log end-cap rings
+    X.fillStyle = "#b58354";
+    X.beginPath();
+    X.arc(x + pw - 7, y + 11, 6, 0, 7);
+    X.fill();
+    X.strokeStyle = "#59381e";
+    X.lineWidth = 1.2;
+    X.beginPath();
+    X.arc(x + pw - 7, y + 11, 3, 0, 7);
+    X.stroke();
+
+    // Hanging vines
+    X.strokeStyle = "#48a85a";
+    X.lineWidth = 2.2;
+    for (let vx = x + 16; vx < x + pw - 14; vx += 34) {
+      const vlen = 10 + (vx % 9);
+      const sw = Math.sin(tt / 20 + vx) * 2.5;
+      X.beginPath();
+      X.moveTo(vx, y + 17);
+      X.quadraticCurveTo(vx + sw, y + 17 + vlen * .5, vx - sw * .5, y + 17 + vlen);
+      X.stroke();
+      X.fillStyle = "#7ce089";
+      X.beginPath();
+      X.arc(vx - sw * .5, y + 17 + vlen, 2.3, 0, 7);
+      X.fill();
+    }
+
+    // Lush mossy top cap
+    X.fillStyle = "#68c775";
+    X.strokeStyle = "#255c32";
+    X.lineWidth = 1.6;
+    X.beginPath();
+    X.moveTo(x - 2, y + 5);
+    X.quadraticCurveTo(x - 2, y - 2, x + 8, y - 2);
+    X.lineTo(x + pw - 8, y - 2);
+    X.quadraticCurveTo(x + pw + 2, y - 2, x + pw + 2, y + 5);
+    for (let gx = x + pw; gx >= x; gx -= 14) {
+      X.lineTo(gx, y + 7 + Math.sin(gx) * 2.5);
+    }
+    X.closePath();
+    X.fill();
+    X.stroke();
+
+  } else if (WI == 1) {
+    // Sky Ruins: Carved marble slab with gold trim & levitating rune crystal underneath
+    glow("#9fe7ff", 14);
+    X.fillStyle = "#7de3ff";
+    X.beginPath();
+    X.moveTo(x + pw / 2, y + 29);
+    X.lineTo(x + pw / 2 + 8, y + 19);
+    X.lineTo(x + pw / 2 - 8, y + 19);
+    X.closePath();
+    X.fill();
+    X.shadowBlur = 0;
+
+    // Tapered stone base
+    X.fillStyle = "#8a85a6";
+    X.strokeStyle = "#3b3752";
+    X.lineWidth = 2;
+    X.beginPath();
+    X.moveTo(x + 2, y + 2);
+    X.lineTo(x + pw - 2, y + 2);
+    X.lineTo(x + pw - 12, y + 19);
+    X.lineTo(x + 12, y + 19);
+    X.closePath();
+    X.fill();
+    X.stroke();
+
+    // Top marble cap & gold inlay
+    X.fillStyle = "#d9d5eb";
+    X.beginPath();
+    X.roundRect(x - 2, y - 2, pw + 4, 7, 3);
+    X.fill();
+    X.stroke();
+    X.fillStyle = "#ffd84d";
+    X.fillRect(x + 10, y + 9, pw - 20, 2.5);
+
+  } else if (WI == 2) {
+    // Dreamy Meadows: Pastel floating turf island with pink frosting drips & flowers
+    X.fillStyle = "#b57643";
+    X.strokeStyle = "#5e3819";
+    X.lineWidth = 2;
+    X.beginPath();
+    X.moveTo(x + 4, y + 4);
+    X.lineTo(x + pw - 4, y + 4);
+    X.quadraticCurveTo(x + pw - 10, y + 21, x + pw / 2, y + 23);
+    X.quadraticCurveTo(x + 10, y + 21, x + 4, y + 4);
+    X.fill();
+    X.stroke();
+
+    // Fluffy meadow grass + pink blossom icing
+    X.fillStyle = "#b7e27c";
+    X.strokeStyle = "#4d7829";
+    X.lineWidth = 1.6;
+    X.beginPath();
+    X.roundRect(x - 3, y - 2, pw + 6, 9, 5);
+    X.fill();
+    X.stroke();
+
+    X.fillStyle = "#ff9ad5";
+    for (let fx = x + 14; fx < x + pw - 10; fx += 28) {
+      X.beginPath();
+      X.arc(fx, y + 1, 3.5, 0, 7);
+      X.fill();
+    }
+
+  } else if (WI == 3) {
+    // Moonlit Lake: Bioluminescent stone ledge with glowing cyan coral & crystal icicles
+    glow("#7de3ff", 14);
+    X.fillStyle = "#1c3663";
+    X.strokeStyle = "#6ce0ff";
+    X.lineWidth = 1.8;
+    X.beginPath();
+    X.moveTo(x, y);
+    X.lineTo(x + pw, y);
+    X.lineTo(x + pw - 8, y + 15);
+    X.lineTo(x + pw * .65, y + 22);
+    X.lineTo(x + pw * .35, y + 16);
+    X.lineTo(x + 8, y + 18);
+    X.closePath();
+    X.fill();
+    X.stroke();
+
+    X.fillStyle = "#7de3ff";
+    X.fillRect(x + 2, y - 1, pw - 4, 3.5);
+    X.shadowBlur = 0;
+
+  } else {
+    // Forgotten Library: Floating enchanted bookshelf plank with gold filigree & candle
+    glow("#ffd27a", 12);
+    X.fillStyle = "#452863";
+    X.strokeStyle = "#1b0d2b";
+    X.lineWidth = 2;
+    X.beginPath();
+    X.roundRect(x, y, pw, 16, 4);
+    X.fill();
+    X.stroke();
+
+    // Gold trim brackets
+    X.fillStyle = "#ffd27a";
+    X.fillRect(x, y, pw, 3);
+    X.fillRect(x + 4, y + 3, 5, 11);
+    X.fillRect(x + pw - 9, y + 3, 5, 11);
+
+    // Glowing arcane underside rune
+    X.fillStyle = "rgba(255, 210, 122, .65)";
+    X.beginPath();
+    X.arc(x + pw / 2, y + 21, 3.5, 0, 7);
+    X.fill();
+    X.shadowBlur = 0;
+  }
+
+  X.restore();
+  X.shadowBlur = 0;
+}
+
+/* ---------- Geometry Dash-style level progress bar ---------- */
+function drawProgressBar() {
+  const w = W[WI];
+  const boss = enemies[enemies.length - 1];
+  const bx = 240, by = 16, bw = 320, bh = 12;
+  const startX = 280, endX = 3000;
+  const prog = boss && boss.dead
+    ? 1
+    : Math.max(0, Math.min(1, (P.x - startX) / (endX - startX)));
+
+  X.save();
+  X.lineJoin = "round";
+  X.lineCap = "round";
+
+  // Dark pill track
+  X.fillStyle = "rgba(18, 10, 38, .78)";
+  X.strokeStyle = "rgba(255, 255, 255, .35)";
+  X.lineWidth = 2;
+  X.beginPath();
+  X.roundRect(bx, by, bw, bh, 6);
+  X.fill();
+  X.stroke();
+
+  // Glowing fill bar
+  if (prog > 0) {
+    const fg = X.createLinearGradient(bx, by, bx + bw, by);
+    fg.addColorStop(0, "#ff7eb6");
+    fg.addColorStop(1, w.gl);
+    glow(w.gl, 12);
+    X.fillStyle = fg;
+    X.beginPath();
+    X.roundRect(bx + 2, by + 2, Math.max(6, (bw - 4) * prog), bh - 4, 4);
+    X.fill();
+    X.shadowBlur = 0;
+  }
+
+  // Bench checkpoint notch on the bar
+  const benchProg = Math.max(0, Math.min(1, (2760 - startX) / (endX - startX)));
+  const bpx = bx + bw * benchProg;
+  X.fillStyle = "#fff";
+  X.fillRect(bpx - 1, by - 2, 2, bh + 4);
+
+  // Moving mini bunny head marker
+  const mx = bx + 4 + (bw - 8) * prog;
+  const my = by + bh / 2;
+  X.fillStyle = "#ffffff";
+  X.strokeStyle = "#3c2b5e";
+  X.lineWidth = 1.4;
+  // Tiny bunny ears
+  X.beginPath();
+  X.ellipse(mx - 2.2, my - 7.5, 1.6, 4, -.15, 0, 7);
+  X.ellipse(mx + 2.2, my - 7.5, 1.6, 4, .15, 0, 7);
+  X.fill();
+  X.stroke();
+  // Tiny bunny head
+  X.beginPath();
+  X.arc(mx, my - 1.5, 5.2, 0, 7);
+  X.fill();
+  X.stroke();
+  X.fillStyle = "#2b4c9b";
+  X.beginPath();
+  X.arc(mx + 1.8, my - 1.8, 1.1, 0, 7);
+  X.fill();
+
+  // Boss icon badge at the right end of the bar
+  const endCx = bx + bw + 14;
+  const endCy = by + bh / 2;
+  const defeated = boss && boss.dead;
+  glow(defeated ? "#4adf6a" : "#ff4f79", 14);
+  X.fillStyle = defeated ? "#1f5e36" : "#3a1029";
+  X.strokeStyle = defeated ? "#6dff96" : "#ff6b8b";
+  X.lineWidth = 2;
+  X.beginPath();
+  X.arc(endCx, endCy, 12.5, 0, 7);
+  X.fill();
+  X.stroke();
+  X.shadowBlur = 0;
+
+  if (defeated) {
+    // Green checkmark when boss is defeated
+    X.strokeStyle = "#7aff9e";
+    X.lineWidth = 2.6;
+    X.beginPath();
+    X.moveTo(endCx - 5, endCy);
+    X.lineTo(endCx - 1, endCy + 4.5);
+    X.lineTo(endCx + 6, endCy - 4.5);
+    X.stroke();
+  } else {
+    // Horned boss skull icon
+    X.fillStyle = "#ffe6ee";
+    // Horns
+    X.beginPath();
+    X.moveTo(endCx - 6, endCy - 4);
+    X.lineTo(endCx - 9, endCy - 9.5);
+    X.lineTo(endCx - 3, endCy - 6);
+    X.moveTo(endCx + 6, endCy - 4);
+    X.lineTo(endCx + 9, endCy - 9.5);
+    X.lineTo(endCx + 3, endCy - 6);
+    X.fill();
+    // Skull cranium & jaw
+    X.beginPath();
+    X.arc(endCx, endCy - 1.5, 6, 0, 7);
+    X.fill();
+    X.fillRect(endCx - 3.5, endCy + 2, 7, 4);
+    // Glowing red eyes
+    X.fillStyle = "#ff2a55";
+    X.beginPath();
+    X.arc(endCx - 2.3, endCy - 1.5, 1.4, 0, 7);
+    X.arc(endCx + 2.3, endCy - 1.5, 1.4, 0, 7);
+    X.fill();
+  }
+
+  X.restore();
+  X.shadowBlur = 0;
+}
+
 function deco(w, x, i) {
   glow(w.gl, 18); X.fillStyle = w.gl; X.globalAlpha = .9; const s = .8 + (i % 3) * .2, d = w.deco;
   if (d == "mush") { X.beginPath(); X.arc(x, GY - 14 * s, 14 * s, Math.PI, 0); X.fill(); X.fillRect(x - 3, GY - 14 * s, 6, 14 * s); }
@@ -1713,7 +2029,8 @@ function panel(x, y, name, fr, col) {
 }
 function drawBattle() {
   const w = W[WI], e = B.e, c = B.cast, ck = cur();
-  X.save(); X.translate(0, -140); bg(w); X.fillStyle = w.gr; X.fillRect(0, GY, 800, 400); X.fillStyle = w.gd; X.fillRect(0, GY + 40, 800, 400); glow(w.gl, 14); X.fillStyle = w.gl; X.fillRect(0, GY, 800, 3); X.shadowBlur = 0;
+  X.save(); X.translate(0, -140); bg(w);
+  ground(w);
   X.fillStyle = "rgba(0,0,0,.3)"; X.beginPath(); X.ellipse(170, GY + 4, 85, 12, 0, 0, 7); X.ellipse(EX, GY + 4, e.boss ? 130 : 90, 15, 0, 0, 7); X.fill();
   const ap = Math.min(1, B.age / 30), dy = c && c.fin && c.t > 28 ? Math.max(0, 1 - (c.t - 28) / 50) : 1, lx = B.lunge > 0 ? -Math.sin(B.lunge / 22 * Math.PI) * 130 : 0, sc = (e.boss ? 1.3 : 1.7) * (.7 + .3 * ap);
   X.save(); X.translate(EX + lx + (e.shake ? (Math.random() - .5) * 12 : 0), GY); X.scale(sc, sc); X.globalAlpha = ap * dy;
@@ -1735,7 +2052,7 @@ function drawBattle() {
 }
 function drawWorld() {
   const w = W[WI], inSit = S == "sit" || (S == "shop" && shopFrom == "sit"); bg(w); X.save(); X.translate(-Math.round(cam), 0); ground(w);
-  for (const p of plats) { X.fillStyle = w.pb; X.fillRect(p.x, p.y, p.w, 14); glow(w.gl, 10); X.fillStyle = w.gl; X.fillRect(p.x, p.y, p.w, 3); X.shadowBlur = 0; }
+  for (const p of plats) drawPlatform(p, w);
   benches.forEach(b => bench(b.x)); X.restore();
   if (w.dark) {
     const sx = P.x - cam + 14, sy = P.y + 20, g = X.createRadialGradient(sx, sy, 60, sx, sy, 370); g.addColorStop(0, "rgba(6,3,24,0)"); g.addColorStop(1, "rgba(6,3,24," + w.dark + ")");
@@ -1758,6 +2075,7 @@ function drawWorld() {
   }
   for (const p of parts) { X.globalAlpha = Math.min(1, p.life / 45); X.fillStyle = p.c; X.fillRect(p.x, p.y, 5, 5); }
   X.globalAlpha = 1; X.restore(); fireflies(w.gl);
+  drawProgressBar();
   X.font = "bold 22px " + FONT; X.fillStyle = "#ff4f86"; glow("#000", 4); X.fillText("♥".repeat(P.hp) + "♡".repeat(P.max - P.hp), 14, 32);
   X.font = "bold 16px " + FONT; X.fillStyle = "#fff"; X.textAlign = "right"; X.fillText("Chapter " + (WI + 1) + " · " + w.n, 786, 28); X.textAlign = "left"; X.shadowBlur = 0;
   if (S == "sit" && !paused) bubble(P.x - cam + 14, P.y - 62, sitT < 50 ? "Resting…" : "Healed and saved. S: shop · E: stand");
