@@ -8,7 +8,7 @@ let finT = 0, credY = 470, credDone = false, spawnT = 0;
 
 const EXIT_MESSAGE = "(exit message here): test test test test";
 const GROUP_MEMBERS = [
-  "Group Members:",
+  "Group 7:",
   "Fernando R. Alonso Jr.",
   "Reshie A. Samontañes",
   "Patrick Layosa Catapang",
@@ -151,6 +151,16 @@ function drawSpawnBeam() {
 }
 
 /* ---------- Admin Toolbar UI ---------- */
+function updateAdminImmortalBtn() {
+  const btn = $("admImmortal");
+  if (!btn) return;
+  const on = !!(save && save.isAdmin && save.immortal);
+  btn.textContent = on ? "Immortal: ON" : "Immortal: OFF";
+  btn.style.background = on ? "#1d5e3a" : "#163859";
+  btn.style.borderColor = on ? "#6dff96" : "#5ce1ff";
+  btn.style.color = on ? "#7aff9e" : "#9fe7ff";
+}
+
 function ensureAdminUI() {
   let bar = $("adminBar");
   if (!bar) {
@@ -161,7 +171,8 @@ function ensureAdminUI() {
       '<span style="color:#ffd84d;align-self:center;margin-right:2px">★ ADMIN:</span>' +
       [0, 1, 2, 3, 4].map(i => '<button type="button" data-tp="' + i + '" style="padding:3px 6px;border-radius:6px;border:1px solid #9b5de5;background:#2f1954;color:#fff;cursor:pointer;font-size:11px">Ch' + (i + 1) + '</button>').join("") +
       '<button type="button" id="admKillMobs" style="padding:3px 7px;border-radius:6px;border:1px solid #ff6b8b;background:#591934;color:#fff;cursor:pointer;font-size:11px">Kill Mobs</button>' +
-      '<button type="button" id="admKillBoss" style="padding:3px 7px;border-radius:6px;border:1px solid #ff9a1a;background:#5e2d0c;color:#ffd84d;cursor:pointer;font-size:11px">Kill Boss</button>';
+      '<button type="button" id="admKillBoss" style="padding:3px 7px;border-radius:6px;border:1px solid #ff9a1a;background:#5e2d0c;color:#ffd84d;cursor:pointer;font-size:11px">Kill Boss</button>' +
+      '<button type="button" id="admImmortal" style="padding:3px 7px;border-radius:6px;border:1px solid #5ce1ff;background:#163859;color:#9fe7ff;cursor:pointer;font-size:11px">Immortal: OFF</button>';
     wrap.appendChild(bar);
 
     bar.querySelectorAll("[data-tp]").forEach(btn => {
@@ -222,7 +233,22 @@ function ensureAdminUI() {
         SFX.win();
       }
     };
+
+    $("admImmortal").onclick = () => {
+      if (!save.isAdmin) return;
+      save.immortal = !save.immortal;
+      if (save.immortal) {
+        P.hp = P.max;
+        save.hp = P.hp;
+        SFX.heal();
+      } else {
+        SFX.blip();
+      }
+      store();
+      updateAdminImmortalBtn();
+    };
   }
+  updateAdminImmortalBtn();
   const show = !!(save && save.isAdmin && ["play", "sit", "battle", "dlg", "ask"].includes(S));
   bar.style.display = show ? "flex" : "none";
 }
@@ -341,6 +367,7 @@ function checkName() {
       displayName: "Admin07",
       isAdmin: true,
       coins: 99999,
+      immortal: !!existing.immortal,
       own: existing.own || ["c0", "b0"],
       cloak: existing.cloak || "c0",
       skin: existing.skin || "b0"
@@ -625,7 +652,7 @@ $("new").onclick = () => {
     openReplayModal();
     return;
   }
-  save = { displayName: save.displayName, isAdmin: save.isAdmin, tut: save.tut, own: save.own, cloak: save.cloak, skin: save.skin, coins: save.isAdmin ? 99999 : save.coins, dev: save.dev, started: true, w: 0, hp: 3 };
+  save = { displayName: save.displayName, isAdmin: save.isAdmin, immortal: !!save.immortal, tut: save.tut, own: save.own, cloak: save.cloak, skin: save.skin, coins: save.isAdmin ? 99999 : save.coins, dev: save.dev, started: true, w: 0, hp: 3 };
   store(); $("title").hidden = true; introOn = true;
   say([
     ["Spellbook", "Long ago, one Heart Crystal kept the magic of every world alive."],
@@ -1043,6 +1070,15 @@ function submit() {
 }
 function loseFight() {
   $("battle").hidden = true;
+  if (save.isAdmin && save.immortal) {
+    P.hp = P.max;
+    save.hp = P.hp;
+    store();
+    invuln = 120;
+    SFX.heal();
+    say([["Monica", "Nice try, monster! Admin Immortality blocked all heart damage!"], ["Spellbook", "No hearts lost (" + P.hp + "/" + P.max + " hearts)."]]);
+    return;
+  }
   P.hp = Math.max(0, P.hp - 1);
   save.hp = P.hp;
   store();
