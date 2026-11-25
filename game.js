@@ -2847,8 +2847,8 @@ function drawWorld() {
   for (const p of parts) { X.globalAlpha = Math.min(1, p.life / 45); X.fillStyle = p.c; X.fillRect(p.x, p.y, 5, 5); }
   X.globalAlpha = 1; X.restore(); fireflies(w.gl);
   drawProgressBar();
-  X.font = "bold 22px " + FONT; X.fillStyle = "#ff4f86"; glow("#000", 4); X.fillText("♥".repeat(P.hp) + "♡".repeat(P.max - P.hp), 14, 32);
-  X.font = "bold 16px " + FONT; X.fillStyle = "#fff"; X.textAlign = "right"; X.fillText("Chapter " + (WI + 1) + " · " + w.n, 786, 28); X.textAlign = "left"; X.shadowBlur = 0;
+  X.font = "bold 22px " + FONT; X.fillStyle = "#ff4f86"; glow("#000", 4); X.fillText("♥".repeat(P.hp) + "♡".repeat(P.max - P.hp), 18, 152);
+  X.font = "bold 12px " + FONT; X.fillStyle = "#fff"; X.textAlign = "right"; X.fillText("Chapter " + (WI + 1) + " · " + w.n, 788, 26); X.textAlign = "left"; X.shadowBlur = 0;
   if (S == "sit" && !paused) bubble(P.x - cam + 14, P.y - 62, sitT < 50 ? "Saving checkpoint…" : "Checkpoint saved! S: shop · E: stand");
   if (titleT > 0) {
     titleT--; X.globalAlpha = Math.min(1, titleT / 40); X.textAlign = "center"; glow(w.gl, 24); X.fillStyle = "#fff"; X.font = "bold 46px Georgia,serif"; X.fillText(w.n, 400, 170);
