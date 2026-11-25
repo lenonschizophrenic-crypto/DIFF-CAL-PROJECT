@@ -4,6 +4,17 @@ const wrap = $("wrap");
 const C = $("c"), X = C.getContext("2d");
 const GY = 370, LW = 4800, BENCH_X = 3950, BOSS_X = 4350, PORTAL_X = 4680, EX = 620, SUP = ["", "", "²", "³", "⁴", "⁵"], FONT = "Trebuchet MS,sans-serif";
 let S = "login", cam = 0, tt = 0, paused = false, idle = Date.now(), flash = 0, lastB = 100, WI = 0, sitT = 0, titleT = 0, introOn = false, sitB = null, shopFrom = "title", shopVis = false, invuln = 0, candE = null;
+let finT = 0, credY = 470, credDone = false;
+
+/* ---------- Ending Message & Credits Placeholders (Edit Here!) ---------- */
+const EXIT_MESSAGE = "(exit message here): Thank you for playing Monica Hop and restoring the Heart Crystal!";
+const GROUP_MEMBERS = [
+  "(group members here):",
+  "Member 1 - Role / Name",
+  "Member 2 - Role / Name",
+  "Member 3 - Role / Name",
+  "Member 4 - Role / Name"
+];
 
 /* ---------- local profiles & save ---------- */
 const DB_KEY = "monicaHop_profiles";
@@ -140,8 +151,8 @@ function checkName() {
       isAdmin: true,
       coins: Math.max(99999, existing.coins || 0),
       own: ["c0", "c1", "c2", "c3", "c4", "b0", "b1", "b2", "b3"],
-      cloak: existing.cloak || "c0",
-      skin: existing.skin || "b0"
+      cloak: existing.cloak || "c4",
+      skin: existing.skin || "b3"
     };
     SFX.win();
     loginSuccess(key, adminSave);
@@ -219,19 +230,14 @@ const cur = () => CK[save.cloak] || CK.c0;
 
 /* ---------- Chapter-Exclusive Mob Names & Taunts ---------- */
 const NM = {
-  // Ch 1: Enchanted Forest
   lady: "Grumpy Ladybug",
   mush: "Bouncy Mushroom",
-  // Ch 2: Sky Ruins
   rock: "Pebble Punk",
   wisp: "Sky Rune Wisp",
-  // Ch 3: Dreamy Meadows
   bee: "Buzzbee",
   plant: "Snapdragon Sprout",
-  // Ch 4: Moonlit Lake
   frog: "Bog Hopper",
   jelly: "Abyssal Jelly",
-  // Ch 5: Forgotten Library
   bookmob: "Grimoire Mimic",
   candle: "Wax Gremlin"
 };
@@ -345,7 +351,7 @@ const MU = [
 const mtof = m => 440 * 2 ** ((m - 69) / 12);
 function mstep() {
   let m = MU[WI], boss = S == "battle" && B && B.e.boss;
-  if (S == "title" || S == "login" || introOn || S == "shop") m = MU[3];
+  if (S == "title" || S == "login" || introOn || S == "shop" || S == "finale" || S == "credits") m = MU[3];
   let [r, sc, tm, ty] = m;
   if (boss) { r -= 12; sc = [0, 3, 5, 6, 7, 10]; tm = 210; ty = "sawtooth"; }
   if (!mute && AC && AC.state == "running") {
@@ -572,6 +578,11 @@ $("ans").addEventListener("keydown", e => { if (e.key == "Enter") { e.preventDef
 const KM = { ArrowLeft: "left", a: "left", A: "left", ArrowRight: "right", d: "right", D: "right", " ": "jump" };
 addEventListener("keydown", e => {
   idle = Date.now(); sfxInit(); if (S == "battle" || S == "ask" || S == "login") return;
+  if (S == "credits") {
+    if (e.key == " " || e.key == "ArrowDown" || e.key == "s" || e.key == "S") keys.jump = 1;
+    if (e.key == "Escape") { showEndBox(); }
+    return;
+  }
   if (S == "shop") { if (e.key == "Escape") closeShop(); return; }
   if (e.key == "Escape" && (S == "play" || S == "sit")) { setPause(!paused); return; }
   if (paused) return;
@@ -585,15 +596,16 @@ addEventListener("keydown", e => {
   }
   if (e.key == "e" || e.key == "E") act();
 });
-addEventListener("keyup", e => { if (KM[e.key]) keys[KM[e.key]] = 0; });
-addEventListener("pointerdown", () => { idle = Date.now(); sfxInit(); });
+addEventListener("keyup", e => { if (KM[e.key]) keys[KM[e.key]] = 0; if (S == "credits") keys.jump = 0; });
+addEventListener("pointerdown", () => { idle = Date.now(); sfxInit(); if (S == "credits") keys.jump = 1; });
+addEventListener("pointerup", () => { if (S == "credits") keys.jump = 0; });
 document.querySelectorAll("#touch [data-k]").forEach(b => {
   const k = b.dataset.k;
   b.addEventListener("pointerdown", e => {
     e.preventDefault();
     if (k == "mute") { mute = !mute; b.textContent = mute ? "🔇" : "🔊"; return; }
     if (k == "pause") { if (S == "play" || S == "sit") setPause(!paused); return; }
-    if (paused || S == "shop" || S == "battle" || S == "ask" || S == "login") return;
+    if (paused || S == "shop" || S == "battle" || S == "ask" || S == "login" || S == "finale" || S == "credits") return;
     if (S == "dlg") { next(); return; }
     if (S == "sit") { stand(); return; }
     if (k == "act") act(); else keys[k] = 1;
@@ -608,8 +620,16 @@ function act() {
 }
 function stand() { S = "play"; }
 
-/* ---------- update ---------- */
+/* ---------- update & ending sequence ---------- */
 function burst(x, y, c) { for (let i = 0; i < 18; i++) parts.push({ x, y, vx: (Math.random() - .5) * 7, vy: -Math.random() * 6, life: 45, c }); }
+
+function showEndBox() {
+  credDone = true;
+  keys.jump = 0;
+  $("endtxt").textContent = "You defeated all five guardians and kept " + P.coins + " coins. Spend them in the shop and play again: every world is different each time.";
+  $("end").hidden = false;
+}
+
 function finish() {
   delete save.bx; delete save.bd; delete save.w; delete save.started; save.tut = 1; save.coins = P.coins; store();
   say([
@@ -619,11 +639,44 @@ function finish() {
     ["Monica", "I’ll take that as a yes."],
     ["Monica", "Can we go home now? I’m hungry."]
   ], () => {
-    S = "end";
-    $("endtxt").textContent = "You defeated all five guardians and kept " + P.coins + " coins. Spend them in the shop and play again: every world is different each time.";
-    $("end").hidden = false;
+    S = "finale";
+    finT = 0;
+    parts = [];
+    SFX.win();
   });
 }
+
+function updateFinale() {
+  finT++;
+  if (finT == 40 || finT == 110 || finT == 180) {
+    SFX.heal();
+    for (let i = 0; i < 28; i++) {
+      const a = (i / 28) * Math.PI * 2;
+      const spd = 2.5 + Math.random() * 4.5;
+      parts.push({ x: 400, y: 185, vx: Math.cos(a) * spd, vy: Math.sin(a) * spd - 1.5, life: 70, c: i % 2 ? "#ffd84d" : "#9fe7ff" });
+    }
+  }
+  if (finT % 6 == 0 && finT < 240) {
+    parts.push({ x: 400 + rnd(-160, 160), y: GY - 10, vx: (Math.random() - .5) * 1.2, vy: -2 - Math.random() * 2.5, life: 65, c: Math.random() < .5 ? "#ff7eb6" : "#ffd84d" });
+  }
+  if (finT >= 320) {
+    S = "credits";
+    credY = 470;
+    credDone = false;
+    keys.jump = 0;
+  }
+}
+
+function updateCredits() {
+  if (credDone) return;
+  const spd = keys.jump ? 3.2 : 0.95;
+  credY -= spd;
+  const totalH = 420 + GROUP_MEMBERS.length * 34;
+  if (credY + totalH < 70) {
+    showEndBox();
+  }
+}
+
 function spellPos(t, ex) { const p = Math.max(0, Math.min(1, (t - 6) / 22)); return { x: 205 + (ex - 45 - 205) * p, y: GY - 100 - Math.sin(p * Math.PI) * 45 }; }
 function bt() {
   B.age++; if (B.lunge > 0) B.lunge--;
@@ -635,11 +688,13 @@ function bt() {
 function update() {
   if (paused) return;
   if (invuln > 0) invuln--;
-  for (const p of parts) { p.x += p.vx; p.y += p.vy; p.vy += .25; p.life--; }
+  for (const p of parts) { p.x += p.vx; p.y += p.vy; p.vy += (S == "finale" ? 0 : .25); p.life--; }
   parts = parts.filter(p => p.life > 0); if (flash > 0) flash--;
   for (const f of fx) { f.x += f.vx || 0; f.y += f.vy || 0; f.vy = (f.vy || 0) + (f.g || 0); f.r += f.gr || 0; f.life--; }
   fx = fx.filter(f => f.life > 0); for (const q of ice) q.life--; ice = ice.filter(q => q.life > 0);
   for (const e of enemies) if (e.shake > 0) e.shake--;
+  if (S == "finale") { updateFinale(); return; }
+  if (S == "credits") { updateCredits(); return; }
   if (S == "battle" && B) { bt(); return; }
   if (S == "sit") {
     sitT++;
@@ -1033,7 +1088,6 @@ function enemy(e) {
   X.lineCap = "round";
 
   if (k == "lady") {
-    /* CH 1: Grumpy Ladybug */
     const walk = Math.sin(tt / 6 + e.ph) * 2.5;
     X.strokeStyle = "#1c1024";
     X.lineWidth = 3;
@@ -1106,7 +1160,6 @@ function enemy(e) {
     teeth(22, -8 + b, 11, 3, 6);
 
   } else if (k == "mush") {
-    /* CH 1: Bouncy Mushroom */
     const hop = Math.max(0, Math.sin(tt / 9 + e.ph));
     const j = hop * 14;
     const sqX = hop > .1 ? .92 : 1.07;
@@ -1160,7 +1213,6 @@ function enemy(e) {
     X.restore();
 
   } else if (k == "rock") {
-    /* CH 2: Pebble Punk (Sky Ruins) */
     const slam = Math.sin(tt / 10 + e.ph) * 2.5;
     glow("#9fe7ff", 14);
     X.fillStyle = "#5b5575";
@@ -1210,11 +1262,9 @@ function enemy(e) {
     teeth(1, -18 + b * .4, 20, 4, 7);
 
   } else if (k == "wisp") {
-    /* CH 2: Sky Rune Wisp (Sky Ruins) */
     const y = -48 + b * 2;
     const rot = tt / 18 + e.ph;
 
-    // Orbiting stone shard ring
     X.fillStyle = "#7d769e";
     X.strokeStyle = "#242036";
     X.lineWidth = 1.6;
@@ -1232,7 +1282,6 @@ function enemy(e) {
       X.stroke();
     }
 
-    // Floating ancient stone diamond core
     glow("#9fe7ff", 18);
     X.fillStyle = "#484263";
     X.strokeStyle = "#9fe7ff";
@@ -1251,7 +1300,6 @@ function enemy(e) {
     teeth(0, y + 6, 14, 3, 5);
 
   } else if (k == "bee") {
-    /* CH 3: Buzzbee (Dreamy Meadows) */
     const y = -50 + b * 2.2;
     const flap = Math.sin(tt * 1.1 + e.ph) * 4;
     X.fillStyle = "rgba(225, 242, 255, .75)";
@@ -1301,9 +1349,7 @@ function enemy(e) {
     teeth(12, y + 3, 10, 3, 5);
 
   } else if (k == "plant") {
-    /* CH 3: Snapdragon Sprout (Dreamy Meadows) */
     const sway = Math.sin(tt / 10 + e.ph) * 4;
-    // Pot / leafy base
     X.fillStyle = "#5aa848";
     X.strokeStyle = "#234f1a";
     X.lineWidth = 2;
@@ -1313,7 +1359,6 @@ function enemy(e) {
     X.fill();
     X.stroke();
 
-    // Curving stem
     X.strokeStyle = "#489638";
     X.lineWidth = 6;
     X.beginPath();
@@ -1321,7 +1366,6 @@ function enemy(e) {
     X.quadraticCurveTo(-8, -24, sway, -38);
     X.stroke();
 
-    // Pink & magenta flower petals around head
     glow("#ff7eb6", 12);
     for (let i = 0; i < 6; i++) {
       const a = i / 6 * Math.PI * 2 + tt / 40;
@@ -1332,7 +1376,6 @@ function enemy(e) {
     }
     X.shadowBlur = 0;
 
-    // Snappy bulb head
     X.fillStyle = "#c92a76";
     X.strokeStyle = "#3b0a22";
     X.lineWidth = 2;
@@ -1345,13 +1388,11 @@ function enemy(e) {
     teeth(sway, -36, 18, 4, 6);
 
   } else if (k == "frog") {
-    /* CH 4: Bog Hopper (Moonlit Lake) */
     const hop = Math.max(0, Math.sin(tt / 10 + e.ph));
     const j = hop * 16;
     X.save();
     X.translate(0, -j);
 
-    // Webbed feet
     X.fillStyle = "#1c526e";
     X.strokeStyle = "#081c29";
     X.lineWidth = 2;
@@ -1361,7 +1402,6 @@ function enemy(e) {
     X.fill();
     X.stroke();
 
-    // Toad body
     glow("#38d9ff", 14);
     X.fillStyle = "#1f688a";
     X.strokeStyle = "#081c29";
@@ -1372,7 +1412,6 @@ function enemy(e) {
     X.stroke();
     X.shadowBlur = 0;
 
-    // Glowing bioluminescent spots
     X.fillStyle = "#7de3ff";
     X.beginPath();
     X.arc(-10, -20, 3, 0, 7);
@@ -1380,7 +1419,6 @@ function enemy(e) {
     X.arc(0, -25, 2.5, 0, 7);
     X.fill();
 
-    // Bulging frog eyes on top
     X.fillStyle = "#1f688a";
     X.beginPath();
     X.arc(-10, -32, 7, 0, 7);
@@ -1392,11 +1430,9 @@ function enemy(e) {
     X.restore();
 
   } else if (k == "jelly") {
-    /* CH 4: Abyssal Jelly (Moonlit Lake) */
     const y = -48 + b * 2.5;
     const pulse = Math.sin(tt / 8 + e.ph) * 3;
 
-    // Flowing tentacles
     glow("#7de3ff", 16);
     X.strokeStyle = "rgba(125, 227, 255, .8)";
     X.lineWidth = 2.5;
@@ -1408,7 +1444,6 @@ function enemy(e) {
       X.stroke();
     }
 
-    // Translucent glowing bell
     const jg = X.createRadialGradient(0, y - 8, 2, 0, y, 26);
     jg.addColorStop(0, "rgba(210, 248, 255, .95)");
     jg.addColorStop(.6, "rgba(64, 165, 235, .75)");
@@ -1428,11 +1463,9 @@ function enemy(e) {
     teeth(0, y + 2, 14, 3, 5);
 
   } else if (k == "bookmob") {
-    /* CH 5: Grimoire Mimic (Forgotten Library) */
     const y = -44 + b * 2.5;
     const flap = Math.sin(tt / 5 + e.ph) * .45;
 
-    // Flapping leather book covers as wings
     glow("#ffd27a", 14);
     for (const dir of [-1, 1]) {
       X.save();
@@ -1449,16 +1482,13 @@ function enemy(e) {
     }
     X.shadowBlur = 0;
 
-    // Pages & monster eyes inside spine
     X.fillStyle = "#f7eed7";
     X.fillRect(-14, y - 10, 28, 20);
     eyes(0, y - 3, "#ff9a1a", 6, 3.4);
     teeth(0, y + 4, 22, 5, 6);
 
   } else {
-    /* CH 5: Wax Gremlin (Forgotten Library) */
     const flick = Math.sin(tt / 4 + e.ph) * 2;
-    // Melted wax body
     X.fillStyle = "#f5ebd6";
     X.strokeStyle = "#3b234a";
     X.lineWidth = 2;
@@ -1467,13 +1497,11 @@ function enemy(e) {
     X.fill();
     X.stroke();
 
-    // Wax drips
     X.beginPath();
     X.arc(-14, -22, 3.5, 0, 7);
     X.arc(14, -16, 4, 0, 7);
     X.fill();
 
-    // Wicked flame crown on top
     glow("#ff9a1a", 18);
     X.fillStyle = "#ff7b1a";
     X.beginPath();
@@ -2426,6 +2454,171 @@ function drawIntro() {
   glow("#9fe7ff", 60 * a); X.fillStyle = "rgba(150,230,255," + (.35 + .55 * a) + ")"; X.beginPath(); X.moveTo(cx, cy - 70); X.lineTo(cx + 42, cy); X.lineTo(cx, cy + 70); X.lineTo(cx - 42, cy); X.fill(); X.shadowBlur = 0;
   monica(240, GY - 40, 1); fireflies("#9fe7ff");
 }
+
+/* ---------- Finale Restoration Animation & Scrolling Credits ---------- */
+function drawFinale() {
+  const w = W[4];
+  cam = 0;
+  bg(w);
+  ground(w);
+
+  const cx = 400, cy = 185;
+  const p = Math.min(1, finT / 220);
+  const pulse = Math.sin(tt / 6) * 6;
+
+  // Skyward magic light pillar
+  if (finT > 30) {
+    const beamA = Math.min(.55, (finT - 30) / 140);
+    const bgGrad = X.createLinearGradient(0, 0, 0, GY);
+    bgGrad.addColorStop(0, "rgba(255, 224, 125, " + beamA + ")");
+    bgGrad.addColorStop(.5, "rgba(159, 231, 255, " + (beamA * .8) + ")");
+    bgGrad.addColorStop(1, "rgba(255, 126, 182, 0)");
+    X.fillStyle = bgGrad;
+    X.fillRect(cx - 35 - p * 45, 0, 70 + p * 90, GY);
+  }
+
+  // Stone pedestal under the Heart Crystal
+  X.fillStyle = "#3c2f59";
+  X.strokeStyle = "#ffd27a";
+  X.lineWidth = 2;
+  X.beginPath();
+  X.roundRect(cx - 44, GY - 18, 88, 18, 5);
+  X.roundRect(cx - 30, GY - 34, 60, 18, 4);
+  X.fill();
+  X.stroke();
+
+  // Expanding shockwave rings
+  for (let r = 0; r < 3; r++) {
+    const rad = ((finT * 2.4 + r * 70) % 210);
+    const alpha = Math.max(0, 1 - rad / 210) * .65;
+    X.strokeStyle = r % 2 ? "rgba(255, 216, 77, " + alpha + ")" : "rgba(159, 231, 255, " + alpha + ")";
+    X.lineWidth = 3;
+    X.beginPath();
+    X.arc(cx, cy, rad, 0, 7);
+    X.stroke();
+  }
+
+  // Blazing Restored Heart Crystal
+  glow("#ffd84d", 45 + p * 35);
+  const cg = X.createRadialGradient(cx, cy, 4, cx, cy, 62 + pulse);
+  cg.addColorStop(0, "#ffffff");
+  cg.addColorStop(.45, "#fff2a6");
+  cg.addColorStop(.8, "#9fe7ff");
+  cg.addColorStop(1, "rgba(255, 126, 182, 0)");
+  X.fillStyle = cg;
+  X.beginPath();
+  X.moveTo(cx, cy - 68 - pulse * .5);
+  X.lineTo(cx + 42 + pulse * .4, cy);
+  X.lineTo(cx, cy + 68 + pulse * .5);
+  X.lineTo(cx - 42 - pulse * .4, cy);
+  X.closePath();
+  X.fill();
+  X.shadowBlur = 0;
+
+  // Monica & Spellbook celebrating beside the crystal
+  monica(255, GY - 40, 1, { cast: p > .15 ? .8 : 0 });
+  book(302, GY - 82);
+
+  for (const pt of parts) {
+    X.globalAlpha = Math.min(1, pt.life / 40);
+    X.fillStyle = pt.c;
+    X.beginPath();
+    X.arc(pt.x, pt.y, 3.2, 0, 7);
+    X.fill();
+  }
+  X.globalAlpha = 1;
+  fireflies("#ffd84d");
+
+  // Smooth fade to black at the end of the animation
+  if (finT > 220) {
+    const fade = Math.min(1, (finT - 220) / 95);
+    X.fillStyle = "rgba(0, 0, 0, " + fade + ")";
+    X.fillRect(0, 0, 800, 450);
+  }
+}
+
+function drawCredits() {
+  X.fillStyle = "#000000";
+  X.fillRect(0, 0, 800, 450);
+
+  // Subtle twinkling stars in the black background
+  X.fillStyle = "#ffffff";
+  for (let i = 0; i < 45; i++) {
+    X.globalAlpha = .2 + .5 * Math.abs(Math.sin(tt / 28 + i));
+    X.fillRect((i * 173) % 800, (i * 89) % 450, 2, 2);
+  }
+  X.globalAlpha = 1;
+
+  let y = credY;
+  X.textAlign = "center";
+
+  // Game Title
+  glow("#ff7eb6", 24);
+  X.fillStyle = "#ffffff";
+  X.font = "bold 46px Georgia,serif";
+  X.fillText("Monica Hop", 400, y);
+  y += 38;
+
+  glow("#7de3ff", 12);
+  X.fillStyle = "#9fe7ff";
+  X.font = "bold 18px " + FONT;
+  X.fillText("Chapter 1 – 5 Complete · The Heart Crystal is Restored", 400, y);
+  X.shadowBlur = 0;
+  y += 64;
+
+  // Exit Message Placeholder Section
+  X.fillStyle = "#ffd84d";
+  X.font = "bold 16px " + FONT;
+  X.fillText("— EXIT MESSAGE —", 400, y);
+  y += 30;
+
+  X.fillStyle = "#ffffff";
+  X.font = "17px " + FONT;
+  // Wrap exit message cleanly if long
+  const words = EXIT_MESSAGE.split(" ");
+  let line = "";
+  for (let i = 0; i < words.length; i++) {
+    const test = line + words[i] + " ";
+    if (X.measureText(test).width > 640 && i > 0) {
+      X.fillText(line.trim(), 400, y);
+      line = words[i] + " ";
+      y += 26;
+    } else {
+      line = test;
+    }
+  }
+  if (line.trim()) {
+    X.fillText(line.trim(), 400, y);
+    y += 26;
+  }
+  y += 46;
+
+  // Group Members Placeholder Section
+  X.fillStyle = "#ff7eb6";
+  X.font = "bold 18px " + FONT;
+  X.fillText("— CREATED BY —", 400, y);
+  y += 34;
+
+  GROUP_MEMBERS.forEach((m, idx) => {
+    X.fillStyle = idx === 0 ? "#ffd84d" : "#f0e6ff";
+    X.font = (idx === 0 ? "bold 17px " : "17px ") + FONT;
+    X.fillText(m, 400, y);
+    y += 32;
+  });
+
+  y += 45;
+  X.fillStyle = "#9fe7ff";
+  X.font = "bold 18px " + FONT;
+  X.fillText("Final Coins Collected: ● " + P.coins, 400, y);
+
+  if (!credDone) {
+    X.fillStyle = "rgba(255,255,255,.45)";
+    X.font = "12px " + FONT;
+    X.fillText("Hold Space or Click to fast-forward credits", 400, 434);
+  }
+  X.textAlign = "left";
+}
+
 function spellDraw(k, c, x, y, t, sz) {
   X.save(); X.translate(x, y); X.scale(sz, sz); glow(c, 26); X.fillStyle = c; X.strokeStyle = c;
   if (k == "star") { X.rotate(t / 4); X.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 7 : 17, a = i * Math.PI / 5; X.lineTo(Math.cos(a) * r, Math.sin(a) * r); } X.fill(); }
@@ -2512,6 +2705,8 @@ function loop(now) {
   const sv = S == "sit" && sitT >= 50 && !paused; if (sv != shopVis) { shopVis = sv; $("shopS").hidden = !sv; }
   if (S == "title" || S == "login" || (S == "shop" && shopFrom == "title")) drawTitle();
   else if (introOn) drawIntro();
+  else if (S == "finale") drawFinale();
+  else if (S == "credits") drawCredits();
   else if (S == "battle" && B) drawBattle();
   else drawWorld();
 }
