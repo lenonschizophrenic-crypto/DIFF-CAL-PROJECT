@@ -217,36 +217,61 @@ const BK = {
 };
 const cur = () => CK[save.cloak] || CK.c0;
 
-const NM = { lady: "Grumpy Ladybug", rock: "Pebble Punk", mush: "Bouncy Mushroom", bee: "Buzzbee" };
+/* ---------- Chapter-Exclusive Mob Names & Taunts ---------- */
+const NM = {
+  // Ch 1: Enchanted Forest
+  lady: "Grumpy Ladybug",
+  mush: "Bouncy Mushroom",
+  // Ch 2: Sky Ruins
+  rock: "Pebble Punk",
+  wisp: "Sky Rune Wisp",
+  // Ch 3: Dreamy Meadows
+  bee: "Buzzbee",
+  plant: "Snapdragon Sprout",
+  // Ch 4: Moonlit Lake
+  frog: "Bog Hopper",
+  jelly: "Abyssal Jelly",
+  // Ch 5: Forgotten Library
+  bookmob: "Grimoire Mimic",
+  candle: "Wax Gremlin"
+};
+
 const TA = {
   lady: "You shall not pass! Answer my question, bunny!",
-  rock: "Rumble rumble! Solve it or get crushed!",
   mush: "Boing! Answer before I devour you!",
-  bee: "Bzzzz! Too slow, bunny!"
+  rock: "Rumble rumble! Solve it or get crushed!",
+  wisp: "Whirrr... solve the sky rune or fall!",
+  bee: "Bzzzz! Too slow, bunny!",
+  plant: "Chomp chomp! Solve it or be fertilizer!",
+  frog: "Ribbit! Cross my lake if you dare!",
+  jelly: "Bloop... shockingly bad at math, bunny?",
+  bookmob: "Snap! Let's see if you actually read the chapters!",
+  candle: "Flicker flicker! Solve it before your wick burns out!"
 };
+
 const W = [
   {
-    n: "Enchanted Forest", sky: ["#cdeedd", "#f6d9ee"], hill: ["#a9dcc0", "#8ccfae"], tr: "#6fb98f", gr: "#68c775", gd: "#4b9e63", soil: "#6e472b", pb: "#8a5e3a", gl: "#ff9ad5", dark: 0, deco: "mush", top: "c", pool: ["lady", "rock"], mt: [0, 0],
+    n: "Enchanted Forest", sky: ["#cdeedd", "#f6d9ee"], hill: ["#a9dcc0", "#8ccfae"], tr: "#6fb98f", gr: "#68c775", gd: "#4b9e63", soil: "#6e472b", pb: "#8a5e3a", gl: "#ff9ad5", dark: 0, deco: "mush", top: "c", pool: ["lady", "mush"], mt: [0, 0],
     out: "The Beetle Guardian is calm again. A portal opens to the Sky Ruins.", in: [],
     boss: { n: "Forest Beetle Guardian", k: "beetle", t: 2, hp: 5, ey: -52, ec: "#fff27a", taunt: "Nobody crosses my forest alive!", win: [["Monica", "I beat a beetle with calculus. Add that to my résumé."]] }
   },
   {
-    n: "Sky Ruins", sky: ["#7fb8ff", "#fbe3d0"], hill: ["#cfd9f2", "#b6c3e6"], tr: "#a9b5d6", gr: "#c6c2d9", gd: "#9a96b8", soil: "#6d698a", pb: "#8e89a8", gl: "#9fe7ff", dark: .12, deco: "crystal", top: "p", pool: ["rock", "bee"], mt: [0, 1],
+    n: "Sky Ruins", sky: ["#7fb8ff", "#fbe3d0"], hill: ["#cfd9f2", "#b6c3e6"], tr: "#a9b5d6", gr: "#c6c2d9", gd: "#9a96b8", soil: "#6d698a", pb: "#8e89a8", gl: "#9fe7ff", dark: .12, deco: "crystal", top: "p", pool: ["rock", "wisp"], mt: [0, 1],
     out: "The Golem crumbles into pebbles. The next portal hums.", in: [["Spellbook", "Sky Ruins. Mind the drop."], ["Monica", "Why does everything float here?"]],
     boss: { n: "Cloudstone Golem", k: "golem", t: 2, hp: 5, ey: -150, ec: "#ff3a3a", taunt: "Stone does not forget. Answer me!", win: [["Monica", "Rocks again. Why is it always rocks?"]] }
   },
   {
-    n: "Dreamy Meadows", sky: ["#ffc9e6", "#cdb8ff"], hill: ["#f0b6e8", "#d6a3f0"], tr: "#e48fd0", gr: "#b7e27c", gd: "#8fc45a", soil: "#9c623e", pb: "#c9894f", gl: "#ffe27a", dark: .1, deco: "flower", top: "c", pool: ["bee", "mush"], mt: [1, 1],
+    n: "Dreamy Meadows", sky: ["#ffc9e6", "#cdb8ff"], hill: ["#f0b6e8", "#d6a3f0"], tr: "#e48fd0", gr: "#b7e27c", gd: "#8fc45a", soil: "#9c623e", pb: "#c9894f", gl: "#ffe27a", dark: .1, deco: "flower", top: "c", pool: ["bee", "plant"], mt: [1, 1],
     out: "The Bloom wilts into petals. Beyond it, the lake glows.", in: [["Spellbook", "Dreamy Meadows. Pretty flowers, ugly teeth."], ["Monica", "So pretty. So suspicious."]],
     boss: { n: "Grumpy Bloom", k: "bloom", t: 3, hp: 6, ey: -140, ec: "#fff", taunt: "I woke up hungry. Solve it or be lunch!", win: [["Monica", "We have a lot in common, flower. Rude."]] }
   },
   {
-    n: "Moonlit Lake", sky: ["#0d1745", "#2a3d8f"], hill: ["#1d2f73", "#162456"], tr: "#10205a", gr: "#2a5fa0", gd: "#1a3a70", soil: "#102447", pb: "#32508f", gl: "#7de3ff", dark: .55, deco: "lily", top: "p", pool: ["mush", "rock"], mt: [1, 1],
+    n: "Moonlit Lake", sky: ["#0d1745", "#2a3d8f"], hill: ["#1d2f73", "#162456"], tr: "#10205a", gr: "#2a5fa0", gd: "#1a3a70", soil: "#102447", pb: "#32508f", gl: "#7de3ff", dark: .55, deco: "lily", top: "p", pool: ["frog", "jelly"], mt: [1, 1],
     out: "The Spirit sinks into the water. One last portal remains.", in: [["Spellbook", "Moonlit Lake. Something old lives in the water."], ["Monica", "It’s dark. I don’t love dark."]],
     boss: { n: "Moonwater Spirit", k: "spirit", t: 4, hp: 7, ey: -95, ec: "#7de3ff", taunt: "The chain runs deep, little bunny.", win: [["Spellbook", "Chain rule mastered."], ["Monica", "I felt that one in my soul."]] }
   },
   {
-    n: "Forgotten Library", sky: ["#170c2e", "#3b1f5e"], hill: ["#2a1748", "#1f1038"], tr: "#241243", gr: "#4b3566", gd: "#35244d", soil: "#211433", pb: "#5a3d78", gl: "#ffd27a", dark: .65, deco: "book", top: "p", pool: ["bee", "rock", "mush", "lady"], mt: [1, 1],
+    n: "Forgotten Library", sky: ["#170c2e", "#3b1f5e"], hill: ["#2a1748", "#1f1038"], tr: "#241243", gr: "#4b3566", gd: "#35244d", soil: "#211433", pb: "#5a3d78", gl: "#ffd27a", dark: .65, deco: "book", top: "p", pool: ["bookmob", "candle"], mt: [1, 1],
     out: "", in: [["Spellbook", "The Forgotten Library. The lost magic is here."], ["Monica", "Please don’t let there be a quiz."], ["Spellbook", "There is always a quiz."]],
     boss: { n: "Ancient Owl Scholar", k: "owl", t: 5, hp: 8, ey: -132, ec: "#ff9a1a", taunt: "Show me everything you have learned.", win: [] }
   }
@@ -349,7 +374,6 @@ function goMenu() {
 }
 function load(wi, fs) {
   WI = wi; const w = W[wi]; P.x = fs && save.bx != null ? save.bx : 280; P.y = GY - 40; P.vx = P.vy = 0; P.on = false; P.face = 1; lastB = P.x; invuln = 0; candE = null;
-  // Extended parkour layout across 4800px chapter length (including multi-tier high platforms)
   const platSpecs = [
     { x: 600, y: rnd(260, 295) },
     { x: 1050, y: rnd(255, 290) },
@@ -366,7 +390,7 @@ function load(wi, fs) {
   for (let i = 0; i < 46; i++) if (Math.random() < .75) coins.push({ x: 260 + i * 94 + rnd(-10, 10), y: GY - 26 - (Math.random() < .25 ? 65 : 0) });
   plats.forEach(p => { for (let k = 0; k < 3; k++) coins.push({ x: p.x + 22 + k * 36, y: p.y - 24 }); });
   const n = rnd(4, 5), xs = [920, 1620, 2360, 3080, 3620].slice(0, n).map(x => x + rnd(-70, 90));
-  enemies = xs.map(x => { const k = pick(w.pool); return { x, k, t: rnd(w.mt[0], w.mt[1]), q: 3, n: NM[k], taunt: TA[k], ph: Math.random() * 6, skip: false }; });
+  enemies = xs.map((x, idx) => { const k = w.pool[idx % w.pool.length]; return { x, k, t: rnd(w.mt[0], w.mt[1]), q: 3, n: NM[k], taunt: TA[k], ph: Math.random() * 6, skip: false }; });
   enemies.push({ x: BOSS_X, boss: 1, q: w.boss.hp, ph: 0, skip: false, ...w.boss });
   const cont = fs && save.bx != null;
   enemies.forEach(e => e.dead = e.boss ? !!(fs && save.bd) : !!cont);
@@ -620,7 +644,6 @@ function update() {
   if (S == "sit") {
     sitT++;
     if (sitT == 50) {
-      // Checkpoint save only (no health recovery)
       SFX.coin();
       save.w = WI; save.bx = lastB; save.coins = P.coins; save.bd = enemies[enemies.length - 1].dead; store();
       burst(P.x + 14, GY - 60, "#ffd84d"); burst(P.x + 14, GY - 60, "#9fe7ff");
@@ -630,7 +653,6 @@ function update() {
   if (S != "play") return;
   const dir = keys.right - keys.left, ab = cur().ab;
   P.vx = dir * 4.8; if (dir) P.face = dir;
-  // Single press per jump (prevents holding jump to spam-hop)
   if (keys.jump && !P.jp && P.on) { P.vy = -12.5; P.on = false; SFX.jump(); }
   else if (keys.jump && !P.jp && !P.on && ab == "wings" && P.air > 0) { P.vy = -10.8; P.air--; SFX.jump(); burst(P.x + 14, P.y + 30, "#fff6b0"); }
   P.jp = keys.jump;
@@ -1011,6 +1033,7 @@ function enemy(e) {
   X.lineCap = "round";
 
   if (k == "lady") {
+    /* CH 1: Grumpy Ladybug */
     const walk = Math.sin(tt / 6 + e.ph) * 2.5;
     X.strokeStyle = "#1c1024";
     X.lineWidth = 3;
@@ -1082,121 +1105,8 @@ function enemy(e) {
     X.stroke();
     teeth(22, -8 + b, 11, 3, 6);
 
-  } else if (k == "rock") {
-    const slam = Math.sin(tt / 10 + e.ph) * 2.5;
-    glow("#ff6a1a", 14);
-    X.fillStyle = "#4b435c";
-    X.strokeStyle = "#1e1929";
-    X.lineWidth = 2.2;
-    X.beginPath();
-    X.moveTo(-24, 0);
-    X.lineTo(-28, -24 + b * .4);
-    X.lineTo(-14, -46 + b * .5);
-    X.lineTo(4, -41 + b * .5);
-    X.lineTo(22, -48 + b * .5);
-    X.lineTo(29, -18 + b * .4);
-    X.lineTo(22, 0);
-    X.closePath();
-    X.fill();
-    X.stroke();
-    X.shadowBlur = 0;
-
-    X.fillStyle = "#685e7d";
-    X.beginPath();
-    X.moveTo(-14, -44 + b * .5);
-    X.lineTo(3, -39 + b * .5);
-    X.lineTo(-4, -26 + b * .4);
-    X.lineTo(-22, -24 + b * .4);
-    X.closePath();
-    X.fill();
-
-    glow("#ff7b29", 10);
-    X.strokeStyle = "#ff8c24";
-    X.lineWidth = 2.2;
-    X.beginPath();
-    X.moveTo(-12, -5); X.lineTo(-4, -20 + b * .4); X.lineTo(7, -14 + b * .4); X.lineTo(14, -29 + b * .4);
-    X.stroke();
-    X.shadowBlur = 0;
-
-    for (const [fx, fy] of [[-31, -13 + slam], [32, -13 - slam]]) {
-      X.fillStyle = "#3a3347";
-      X.strokeStyle = "#1e1929";
-      X.lineWidth = 1.8;
-      X.beginPath();
-      X.roundRect(fx - 7, fy - 7, 14, 14, 4);
-      X.fill();
-      X.stroke();
-    }
-
-    eyes(1, -29 + b * .4, "#ff4a2a", 8.5, 3.8);
-    X.fillStyle = "#2b2536";
-    X.beginPath();
-    X.moveTo(-13, -36 + b * .4); X.lineTo(1, -31 + b * .4); X.lineTo(15, -36 + b * .4); X.lineTo(14, -32 + b * .4); X.lineTo(1, -28 + b * .4); X.lineTo(-12, -32 + b * .4);
-    X.closePath();
-    X.fill();
-    teeth(1, -18 + b * .4, 20, 4, 7);
-
-  } else if (k == "bee") {
-    const y = -50 + b * 2.2;
-    const flap = Math.sin(tt * 1.1 + e.ph) * 4;
-    X.fillStyle = "rgba(225, 242, 255, .75)";
-    X.strokeStyle = "#8cb8de";
-    X.lineWidth = 1.4;
-    X.beginPath();
-    X.ellipse(-7, y - 15, 13, 6 + Math.abs(flap) * .5, -.45, 0, 7);
-    X.ellipse(7, y - 15, 13, 6 + Math.abs(flap) * .5, .45, 0, 7);
-    X.fill();
-    X.stroke();
-
-    X.fillStyle = "#2b1d38";
-    X.beginPath();
-    X.moveTo(-18, y - 3);
-    X.lineTo(-35, y + 2);
-    X.lineTo(-18, y + 6);
-    X.closePath();
-    X.fill();
-
-    glow("#ffcf33", 12);
-    X.fillStyle = "#ffd438";
-    X.strokeStyle = "#2b1d38";
-    X.lineWidth = 2;
-    X.beginPath();
-    X.ellipse(0, y, 20, 14, 0, 0, 7);
-    X.fill();
-    X.stroke();
-    X.shadowBlur = 0;
-
-    X.save();
-    X.beginPath();
-    X.ellipse(0, y, 19, 13, 0, 0, 7);
-    X.clip();
-    X.fillStyle = "#261833";
-    X.fillRect(-13, y - 15, 5.5, 30);
-    X.fillRect(-2, y - 15, 5.5, 30);
-    X.restore();
-
-    X.strokeStyle = "#261833";
-    X.lineWidth = 2;
-    X.beginPath();
-    X.moveTo(-4, y + 13); X.lineTo(-6, y + 20 + b * .4);
-    X.moveTo(4, y + 13); X.lineTo(2, y + 20 - b * .4);
-    X.stroke();
-
-    X.beginPath();
-    X.moveTo(10, y - 12); X.quadraticCurveTo(14, y - 22, 19, y - 20);
-    X.moveTo(14, y - 11); X.quadraticCurveTo(19, y - 20, 23, y - 17);
-    X.stroke();
-
-    eyes(12, y - 3, "#ff3b5c", 3.4, 3.2);
-    X.strokeStyle = "#261833";
-    X.lineWidth = 2;
-    X.beginPath();
-    X.moveTo(7, y - 8); X.lineTo(13, y - 5);
-    X.moveTo(18, y - 7); X.lineTo(13, y - 5);
-    X.stroke();
-    teeth(12, y + 3, 10, 3, 5);
-
-  } else {
+  } else if (k == "mush") {
+    /* CH 1: Bouncy Mushroom */
     const hop = Math.max(0, Math.sin(tt / 9 + e.ph));
     const j = hop * 14;
     const sqX = hop > .1 ? .92 : 1.07;
@@ -1248,6 +1158,338 @@ function enemy(e) {
     X.fill();
     teeth(0, -12, 16, 4, 5);
     X.restore();
+
+  } else if (k == "rock") {
+    /* CH 2: Pebble Punk (Sky Ruins) */
+    const slam = Math.sin(tt / 10 + e.ph) * 2.5;
+    glow("#9fe7ff", 14);
+    X.fillStyle = "#5b5575";
+    X.strokeStyle = "#242036";
+    X.lineWidth = 2.2;
+    X.beginPath();
+    X.moveTo(-24, 0);
+    X.lineTo(-28, -24 + b * .4);
+    X.lineTo(-14, -46 + b * .5);
+    X.lineTo(4, -41 + b * .5);
+    X.lineTo(22, -48 + b * .5);
+    X.lineTo(29, -18 + b * .4);
+    X.lineTo(22, 0);
+    X.closePath();
+    X.fill();
+    X.stroke();
+    X.shadowBlur = 0;
+
+    X.fillStyle = "#7d769e";
+    X.beginPath();
+    X.moveTo(-14, -44 + b * .5);
+    X.lineTo(3, -39 + b * .5);
+    X.lineTo(-4, -26 + b * .4);
+    X.lineTo(-22, -24 + b * .4);
+    X.closePath();
+    X.fill();
+
+    glow("#7de3ff", 10);
+    X.strokeStyle = "#7de3ff";
+    X.lineWidth = 2.2;
+    X.beginPath();
+    X.moveTo(-12, -5); X.lineTo(-4, -20 + b * .4); X.lineTo(7, -14 + b * .4); X.lineTo(14, -29 + b * .4);
+    X.stroke();
+    X.shadowBlur = 0;
+
+    for (const [fx, fy] of [[-31, -13 + slam], [32, -13 - slam]]) {
+      X.fillStyle = "#454059";
+      X.strokeStyle = "#242036";
+      X.lineWidth = 1.8;
+      X.beginPath();
+      X.roundRect(fx - 7, fy - 7, 14, 14, 4);
+      X.fill();
+      X.stroke();
+    }
+
+    eyes(1, -29 + b * .4, "#7de3ff", 8.5, 3.8);
+    teeth(1, -18 + b * .4, 20, 4, 7);
+
+  } else if (k == "wisp") {
+    /* CH 2: Sky Rune Wisp (Sky Ruins) */
+    const y = -48 + b * 2;
+    const rot = tt / 18 + e.ph;
+
+    // Orbiting stone shard ring
+    X.fillStyle = "#7d769e";
+    X.strokeStyle = "#242036";
+    X.lineWidth = 1.6;
+    for (let i = 0; i < 4; i++) {
+      const a = rot + i * 1.57;
+      const sx = Math.cos(a) * 26;
+      const sy = y + Math.sin(a) * 10;
+      X.beginPath();
+      X.moveTo(sx, sy - 7);
+      X.lineTo(sx + 6, sy);
+      X.lineTo(sx, sy + 7);
+      X.lineTo(sx - 6, sy);
+      X.closePath();
+      X.fill();
+      X.stroke();
+    }
+
+    // Floating ancient stone diamond core
+    glow("#9fe7ff", 18);
+    X.fillStyle = "#484263";
+    X.strokeStyle = "#9fe7ff";
+    X.lineWidth = 2.2;
+    X.beginPath();
+    X.moveTo(0, y - 24);
+    X.lineTo(18, y);
+    X.lineTo(0, y + 24);
+    X.lineTo(-18, y);
+    X.closePath();
+    X.fill();
+    X.stroke();
+    X.shadowBlur = 0;
+
+    eyes(0, y - 3, "#9fe7ff", 6, 3.5);
+    teeth(0, y + 6, 14, 3, 5);
+
+  } else if (k == "bee") {
+    /* CH 3: Buzzbee (Dreamy Meadows) */
+    const y = -50 + b * 2.2;
+    const flap = Math.sin(tt * 1.1 + e.ph) * 4;
+    X.fillStyle = "rgba(225, 242, 255, .75)";
+    X.strokeStyle = "#8cb8de";
+    X.lineWidth = 1.4;
+    X.beginPath();
+    X.ellipse(-7, y - 15, 13, 6 + Math.abs(flap) * .5, -.45, 0, 7);
+    X.ellipse(7, y - 15, 13, 6 + Math.abs(flap) * .5, .45, 0, 7);
+    X.fill();
+    X.stroke();
+
+    X.fillStyle = "#2b1d38";
+    X.beginPath();
+    X.moveTo(-18, y - 3);
+    X.lineTo(-35, y + 2);
+    X.lineTo(-18, y + 6);
+    X.closePath();
+    X.fill();
+
+    glow("#ffcf33", 12);
+    X.fillStyle = "#ffd438";
+    X.strokeStyle = "#2b1d38";
+    X.lineWidth = 2;
+    X.beginPath();
+    X.ellipse(0, y, 20, 14, 0, 0, 7);
+    X.fill();
+    X.stroke();
+    X.shadowBlur = 0;
+
+    X.save();
+    X.beginPath();
+    X.ellipse(0, y, 19, 13, 0, 0, 7);
+    X.clip();
+    X.fillStyle = "#261833";
+    X.fillRect(-13, y - 15, 5.5, 30);
+    X.fillRect(-2, y - 15, 5.5, 30);
+    X.restore();
+
+    X.strokeStyle = "#261833";
+    X.lineWidth = 2;
+    X.beginPath();
+    X.moveTo(-4, y + 13); X.lineTo(-6, y + 20 + b * .4);
+    X.moveTo(4, y + 13); X.lineTo(2, y + 20 - b * .4);
+    X.stroke();
+
+    eyes(12, y - 3, "#ff3b5c", 3.4, 3.2);
+    teeth(12, y + 3, 10, 3, 5);
+
+  } else if (k == "plant") {
+    /* CH 3: Snapdragon Sprout (Dreamy Meadows) */
+    const sway = Math.sin(tt / 10 + e.ph) * 4;
+    // Pot / leafy base
+    X.fillStyle = "#5aa848";
+    X.strokeStyle = "#234f1a";
+    X.lineWidth = 2;
+    X.beginPath();
+    X.ellipse(-14, -4, 12, 5, -.3, 0, 7);
+    X.ellipse(14, -4, 12, 5, .3, 0, 7);
+    X.fill();
+    X.stroke();
+
+    // Curving stem
+    X.strokeStyle = "#489638";
+    X.lineWidth = 6;
+    X.beginPath();
+    X.moveTo(0, -4);
+    X.quadraticCurveTo(-8, -24, sway, -38);
+    X.stroke();
+
+    // Pink & magenta flower petals around head
+    glow("#ff7eb6", 12);
+    for (let i = 0; i < 6; i++) {
+      const a = i / 6 * Math.PI * 2 + tt / 40;
+      X.fillStyle = i % 2 ? "#ff6bb5" : "#ff9ed0";
+      X.beginPath();
+      X.ellipse(sway + Math.cos(a) * 16, -40 + Math.sin(a) * 16, 9, 6, a, 0, 7);
+      X.fill();
+    }
+    X.shadowBlur = 0;
+
+    // Snappy bulb head
+    X.fillStyle = "#c92a76";
+    X.strokeStyle = "#3b0a22";
+    X.lineWidth = 2;
+    X.beginPath();
+    X.arc(sway, -40, 15, 0, 7);
+    X.fill();
+    X.stroke();
+
+    eyes(sway, -44, "#ffe27a", 5.5, 3.2);
+    teeth(sway, -36, 18, 4, 6);
+
+  } else if (k == "frog") {
+    /* CH 4: Bog Hopper (Moonlit Lake) */
+    const hop = Math.max(0, Math.sin(tt / 10 + e.ph));
+    const j = hop * 16;
+    X.save();
+    X.translate(0, -j);
+
+    // Webbed feet
+    X.fillStyle = "#1c526e";
+    X.strokeStyle = "#081c29";
+    X.lineWidth = 2;
+    X.beginPath();
+    X.ellipse(-18, -3, 9, 4, 0, 0, 7);
+    X.ellipse(18, -3, 9, 4, 0, 0, 7);
+    X.fill();
+    X.stroke();
+
+    // Toad body
+    glow("#38d9ff", 14);
+    X.fillStyle = "#1f688a";
+    X.strokeStyle = "#081c29";
+    X.lineWidth = 2.2;
+    X.beginPath();
+    X.ellipse(0, -16, 22, 16, 0, 0, 7);
+    X.fill();
+    X.stroke();
+    X.shadowBlur = 0;
+
+    // Glowing bioluminescent spots
+    X.fillStyle = "#7de3ff";
+    X.beginPath();
+    X.arc(-10, -20, 3, 0, 7);
+    X.arc(10, -18, 3.5, 0, 7);
+    X.arc(0, -25, 2.5, 0, 7);
+    X.fill();
+
+    // Bulging frog eyes on top
+    X.fillStyle = "#1f688a";
+    X.beginPath();
+    X.arc(-10, -32, 7, 0, 7);
+    X.arc(10, -32, 7, 0, 7);
+    X.fill();
+    X.stroke();
+    eyes(0, -32, "#7de3ff", 10, 3.8);
+    teeth(0, -14, 22, 5, 5);
+    X.restore();
+
+  } else if (k == "jelly") {
+    /* CH 4: Abyssal Jelly (Moonlit Lake) */
+    const y = -48 + b * 2.5;
+    const pulse = Math.sin(tt / 8 + e.ph) * 3;
+
+    // Flowing tentacles
+    glow("#7de3ff", 16);
+    X.strokeStyle = "rgba(125, 227, 255, .8)";
+    X.lineWidth = 2.5;
+    for (let i = -2; i <= 2; i++) {
+      const wave = Math.sin(tt / 7 + i + e.ph) * 5;
+      X.beginPath();
+      X.moveTo(i * 7, y + 6);
+      X.quadraticCurveTo(i * 7 + wave, y + 22, i * 7 - wave, y + 36);
+      X.stroke();
+    }
+
+    // Translucent glowing bell
+    const jg = X.createRadialGradient(0, y - 8, 2, 0, y, 26);
+    jg.addColorStop(0, "rgba(210, 248, 255, .95)");
+    jg.addColorStop(.6, "rgba(64, 165, 235, .75)");
+    jg.addColorStop(1, "rgba(25, 80, 160, .4)");
+    X.fillStyle = jg;
+    X.strokeStyle = "#9fe7ff";
+    X.lineWidth = 2;
+    X.beginPath();
+    X.ellipse(0, y, 22 + pulse, 18 - pulse * .5, 0, Math.PI, 0);
+    X.quadraticCurveTo(0, y + 10, -22 - pulse, y);
+    X.closePath();
+    X.fill();
+    X.stroke();
+    X.shadowBlur = 0;
+
+    eyes(0, y - 5, "#ffffff", 7, 3.5);
+    teeth(0, y + 2, 14, 3, 5);
+
+  } else if (k == "bookmob") {
+    /* CH 5: Grimoire Mimic (Forgotten Library) */
+    const y = -44 + b * 2.5;
+    const flap = Math.sin(tt / 5 + e.ph) * .45;
+
+    // Flapping leather book covers as wings
+    glow("#ffd27a", 14);
+    for (const dir of [-1, 1]) {
+      X.save();
+      X.translate(0, y);
+      X.rotate(dir * flap);
+      X.fillStyle = "#591c6e";
+      X.strokeStyle = "#ffd27a";
+      X.lineWidth = 2;
+      X.beginPath();
+      X.roundRect(dir == 1 ? 0 : -28, -14, 28, 28, 4);
+      X.fill();
+      X.stroke();
+      X.restore();
+    }
+    X.shadowBlur = 0;
+
+    // Pages & monster eyes inside spine
+    X.fillStyle = "#f7eed7";
+    X.fillRect(-14, y - 10, 28, 20);
+    eyes(0, y - 3, "#ff9a1a", 6, 3.4);
+    teeth(0, y + 4, 22, 5, 6);
+
+  } else {
+    /* CH 5: Wax Gremlin (Forgotten Library) */
+    const flick = Math.sin(tt / 4 + e.ph) * 2;
+    // Melted wax body
+    X.fillStyle = "#f5ebd6";
+    X.strokeStyle = "#3b234a";
+    X.lineWidth = 2;
+    X.beginPath();
+    X.roundRect(-14, -34, 28, 34, [6, 6, 4, 4]);
+    X.fill();
+    X.stroke();
+
+    // Wax drips
+    X.beginPath();
+    X.arc(-14, -22, 3.5, 0, 7);
+    X.arc(14, -16, 4, 0, 7);
+    X.fill();
+
+    // Wicked flame crown on top
+    glow("#ff9a1a", 18);
+    X.fillStyle = "#ff7b1a";
+    X.beginPath();
+    X.moveTo(-7, -34);
+    X.quadraticCurveTo(-9, -48, flick, -56);
+    X.quadraticCurveTo(9, -48, 7, -34);
+    X.closePath();
+    X.fill();
+    X.fillStyle = "#fff27a";
+    X.beginPath();
+    X.ellipse(flick * .5, -42, 3.5, 7, 0, 0, 7);
+    X.fill();
+    X.shadowBlur = 0;
+
+    eyes(0, -21, "#ff7b1a", 6, 3.4);
+    teeth(0, -12, 16, 4, 5);
   }
   X.restore();
   X.shadowBlur = 0;
@@ -1912,7 +2154,6 @@ function drawPortal(x, w, unlocked) {
   X.lineJoin = "round";
   X.lineCap = "round";
 
-  // Stone altar base
   X.fillStyle = "#2b2142";
   X.strokeStyle = "#140d24";
   X.lineWidth = 2.5;
@@ -1922,7 +2163,6 @@ function drawPortal(x, w, unlocked) {
   X.fill();
   X.stroke();
 
-  // Carved stone arch pillars
   X.fillStyle = "#3c2f59";
   X.beginPath();
   X.roundRect(-38, -56, 12, 110, 5);
@@ -1930,7 +2170,6 @@ function drawPortal(x, w, unlocked) {
   X.fill();
   X.stroke();
 
-  // Keystone arch top
   X.beginPath();
   X.arc(0, -54, 38, Math.PI, 0);
   X.lineWidth = 10;
@@ -1940,7 +2179,6 @@ function drawPortal(x, w, unlocked) {
   X.strokeStyle = unlocked ? w.gl : "#5a5270";
   X.stroke();
 
-  // Top keystone gem
   glow(unlocked ? w.gl : "#444", unlocked ? 20 : 4);
   X.fillStyle = unlocked ? w.gl : "#555";
   X.beginPath();
@@ -1953,7 +2191,6 @@ function drawPortal(x, w, unlocked) {
   X.shadowBlur = 0;
 
   if (unlocked) {
-    // Swirling dimensional vortex
     glow(w.gl, 34);
     const vg = X.createRadialGradient(0, 0, 4, 0, 0, 54);
     vg.addColorStop(0, "#ffffff");
@@ -1964,7 +2201,6 @@ function drawPortal(x, w, unlocked) {
     X.ellipse(0, 0, 26, 54, 0, 0, 7);
     X.fill();
 
-    // Rotating spiral rings inside portal
     X.strokeStyle = "#ffffff";
     X.lineWidth = 2;
     for (let r = 0; r < 3; r++) {
@@ -1974,7 +2210,6 @@ function drawPortal(x, w, unlocked) {
       X.stroke();
     }
 
-    // Orbiting energy motes
     X.fillStyle = "#fff";
     for (let i = 0; i < 6; i++) {
       const a = tt / 16 + i * 1.047;
@@ -1984,7 +2219,6 @@ function drawPortal(x, w, unlocked) {
     }
     X.shadowBlur = 0;
   } else {
-    // Sealed dark barrier + padlock icon until guardian is defeated
     X.fillStyle = "rgba(18, 12, 34, .75)";
     X.beginPath();
     X.ellipse(0, 0, 25, 53, 0, 0, 7);
