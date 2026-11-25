@@ -132,16 +132,16 @@ function checkName() {
   const raw = $("nameIn").value.trim();
   if (!raw) { $("loginMsg").textContent = "Please type a name first."; return; }
   const key = raw.toLowerCase();
-  if (key === "admin666") {
+  if (key === "admin07") {
     const existing = db[key] || {};
     const adminSave = {
       ...existing,
-      displayName: "Admin666",
+      displayName: "Admin07",
       isAdmin: true,
       coins: Math.max(99999, existing.coins || 0),
       own: ["c0", "c1", "c2", "c3", "c4", "b0", "b1", "b2", "b3"],
-      cloak: existing.cloak || "c4",
-      skin: existing.skin || "b3"
+      cloak: existing.cloak || "c0",
+      skin: existing.skin || "b0"
     };
     SFX.win();
     loginSuccess(key, adminSave);
