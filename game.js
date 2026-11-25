@@ -6,14 +6,14 @@ const GY = 370, LW = 4800, BENCH_X = 3950, BOSS_X = 4350, PORTAL_X = 4680, EX = 
 let S = "login", cam = 0, tt = 0, paused = false, idle = Date.now(), flash = 0, lastB = 100, WI = 0, sitT = 0, titleT = 0, introOn = false, sitB = null, shopFrom = "title", shopVis = false, invuln = 0, candE = null;
 let finT = 0, credY = 470, credDone = false, spawnT = 0;
 
-/* ---------- Ending Message & Credits Placeholders (Edit Here!) ---------- */
-const EXIT_MESSAGE = "(exit message here): Thank you for playing Monica Hop and restoring the Heart Crystal!";
+const EXIT_MESSAGE = "(exit message here): test test test test";
 const GROUP_MEMBERS = [
-  "(group members here):",
-  "Member 1 - Role / Name",
-  "Member 2 - Role / Name",
-  "Member 3 - Role / Name",
-  "Member 4 - Role / Name"
+  "Group Members:",
+  "Fernando R. Alonso Jr.",
+  "Reshie A. Samontañes",
+  "Patrick Layosa Catapang",
+  "Lance Jared Respicio",
+  "Jerico"
 ];
 
 /* ---------- local profiles & save ---------- */
