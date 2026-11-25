@@ -238,7 +238,78 @@ function hasProgress() {
   return !!(save.started || save.bx != null || (save.w && save.w > 0) || (!save.isAdmin && save.coins && save.coins > 0));
 }
 
+function ensureReplayUI() {
+  let box = $("replayBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "replayBox";
+    box.hidden = true;
+    box.style.cssText = "position:absolute;inset:0;z-index:55;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(12,5,24,.84);backdrop-filter:blur(4px);color:#fff;font-family:" + FONT + ";text-align:center;padding:20px;";
+    const chCards = W.map((w, i) =>
+      '<button type="button" data-rch="' + i + '" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:10px 16px;border-radius:12px;border:1.5px solid #9b5de5;background:#261347;color:#fff;font:bold 14px ' + FONT + ';cursor:pointer;text-align:left;transition:transform .1s;">' +
+      '<span><span style="color:#ffd27a;">Chapter ' + (i + 1) + '</span> · ' + w.n + '</span>' +
+      '<span style="color:#ff7eb6;font-size:12px;">Play ▶</span>' +
+      '</button>'
+    ).join("");
+
+    box.innerHTML =
+      '<div style="background:rgba(28,14,52,.95);border:2px solid #9b5de5;border-radius:18px;padding:22px 28px;width:min(92%,420px);box-shadow:0 0 35px rgba(155,93,229,.45);">' +
+      '<h2 style="margin:0 0 6px;font:bold 26px Georgia,serif;color:#ffd27a;text-shadow:0 0 12px rgba(255,210,122,.45);">Re-play Chapters</h2>' +
+      '<p style="margin:0 0 14px;font-size:13px;color:#e8dcff;">You completed the adventure! Pick any chapter to replay:</p>' +
+      '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">' + chCards + '</div>' +
+      '<button type="button" id="replayCloseBtn" style="padding:8px 20px;border-radius:999px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;font:bold 13px ' + FONT + ';cursor:pointer;">Back</button>' +
+      '</div>';
+    wrap.appendChild(box);
+
+    box.querySelectorAll("[data-rch]").forEach(btn => {
+      btn.onclick = () => {
+        const ch = parseInt(btn.dataset.rch, 10);
+        box.hidden = true;
+        box.style.display = "none";
+        save.w = ch;
+        save.hp = 3;
+        save.started = true;
+        save.replaying = true;
+        delete save.bx;
+        delete save.bd;
+        store();
+        P.max = 3;
+        P.hp = 3;
+        P.coins = save.isAdmin ? 99999 : (save.coins || 0);
+        seen.clear();
+        $("title").hidden = true;
+        S = "play";
+        setPause(false);
+        keys.left = keys.right = keys.jump = 0;
+        SFX.portal();
+        load(ch, false, true);
+      };
+    });
+
+    $("replayCloseBtn").onclick = () => {
+      box.hidden = true;
+      box.style.display = "none";
+    };
+  }
+  return box;
+}
+
+function openReplayModal() {
+  const box = ensureReplayUI();
+  box.hidden = false;
+  box.style.display = "flex";
+  SFX.blip();
+}
+
 function updateTitleButtons() {
+  if (save.completed) {
+    $("new").hidden = false;
+    $("new").textContent = "Re-play Chapters";
+    const activeReplay = !!(save.replaying && (save.started || save.bx != null || (save.w && save.w > 0)));
+    $("cont").hidden = !activeReplay;
+    return;
+  }
+  $("new").textContent = "New Game";
   const prog = hasProgress();
   $("new").hidden = prog;
   $("cont").hidden = !prog;
@@ -317,6 +388,8 @@ $("exitAcc").onclick = () => {
   $("dlg").hidden = true; $("battle").hidden = true; $("shop").hidden = true; $("end").hidden = true; $("shopS").hidden = true; $("askFight").hidden = true; $("title").hidden = true;
   const goBox = $("gameOverBox");
   if (goBox) { goBox.hidden = true; goBox.style.display = "none"; }
+  const repBox = $("replayBox");
+  if (repBox) { repBox.hidden = true; repBox.style.display = "none"; }
   activeUser = ""; pendingUser = ""; save = {};
   updateProfileUI();
   ensureAdminUI();
@@ -501,6 +574,8 @@ function goMenu() {
   $("dlg").hidden = true; $("battle").hidden = true; $("shop").hidden = true; $("end").hidden = true; $("shopS").hidden = true; $("askFight").hidden = true;
   const goBox = $("gameOverBox");
   if (goBox) { goBox.hidden = true; goBox.style.display = "none"; }
+  const repBox = $("replayBox");
+  if (repBox) { repBox.hidden = true; repBox.style.display = "none"; }
   $("title").hidden = false;
   updateTitleButtons();
   S = "title"; cam = 0; idle = Date.now();
@@ -546,6 +621,10 @@ function begin(fs) {
   load(fs ? save.w || 0 : 0, fs, true);
 }
 $("new").onclick = () => {
+  if (save.completed) {
+    openReplayModal();
+    return;
+  }
   save = { displayName: save.displayName, isAdmin: save.isAdmin, tut: save.tut, own: save.own, cloak: save.cloak, skin: save.skin, coins: save.isAdmin ? 99999 : save.coins, dev: save.dev, started: true, w: 0, hp: 3 };
   store(); $("title").hidden = true; introOn = true;
   say([
@@ -720,7 +799,13 @@ $("ans").addEventListener("keydown", e => { if (e.key == "Enter") { e.preventDef
 /* ---------- input ---------- */
 const KM = { ArrowLeft: "left", a: "left", A: "left", ArrowRight: "right", d: "right", D: "right", " ": "jump" };
 addEventListener("keydown", e => {
-  idle = Date.now(); sfxInit(); if (S == "battle" || S == "ask" || S == "login" || S == "gameover") return;
+  idle = Date.now(); sfxInit();
+  const repBox = $("replayBox");
+  if (repBox && !repBox.hidden) {
+    if (e.key == "Escape") { repBox.hidden = true; repBox.style.display = "none"; }
+    return;
+  }
+  if (S == "battle" || S == "ask" || S == "login" || S == "gameover") return;
   if (S == "credits") {
     if (credDone) {
       if (["Enter", " ", "Escape"].includes(e.key)) { e.preventDefault(); SFX.blip(); goMenu(); }
@@ -789,7 +874,7 @@ function showEndBox() {
 
 function finish() {
   if (save.isAdmin) P.coins = 99999;
-  delete save.bx; delete save.bd; delete save.w; delete save.started; delete save.hp; save.tut = 1; save.coins = P.coins; store();
+  delete save.bx; delete save.bd; delete save.w; delete save.started; delete save.hp; delete save.replaying; save.tut = 1; save.completed = true; save.coins = P.coins; store();
   say([
     ["Spellbook", "The Heart Crystal blazes with light. The magic is restored."],
     ["Monica", "So… am I officially a great wizard now?"],
