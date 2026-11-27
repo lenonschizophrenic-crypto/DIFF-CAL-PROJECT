@@ -2,13 +2,14 @@ const $ = id => document.getElementById(id);
 let K = 1;
 const wrap = $("wrap");
 const C = $("c"), X = C.getContext("2d");
-const GY = 370, LW = 4800, BENCH_X = 3950, BOSS_X = 4350, PORTAL_X = 4680, EX = 620, SUP = ["", "", "²", "³", "⁴", "⁵"], FONT = "Trebuchet MS,sans-serif";
+const GY = 370, LW = 4800, FOUNTAIN_X = 430, BENCH_X = 3950, BOSS_X = 4350, PORTAL_X = 4680, EX = 620, SUP = ["", "", "²", "³", "⁴", "⁵"], FONT = "Trebuchet MS,sans-serif";
+let replayGuideOpen = false;
 let S = "login", cam = 0, tt = 0, paused = false, idle = Date.now(), flash = 0, lastB = 100, WI = 0, sitT = 0, titleT = 0, introOn = false, sitB = null, shopFrom = "title", shopVis = false, invuln = 0, candE = null;
 let finT = 0, credY = 470, credDone = false, spawnT = 0;
 
 const EXIT_MESSAGE = "(exit message here): test test test test";
 const GROUP_MEMBERS = [
-  "Group 7:",
+  "Group Members:",
   "Fernando R. Alonso Jr.",
   "Reshie A. Samontañes",
   "Patrick Layosa Catapang",
@@ -161,19 +162,34 @@ function updateAdminImmortalBtn() {
   btn.style.color = on ? "#7aff9e" : "#9fe7ff";
 }
 
+let adminMinimized = false;
+
 function ensureAdminUI() {
   let bar = $("adminBar");
   if (!bar) {
     bar = document.createElement("div");
     bar.id = "adminBar";
-    bar.style.cssText = "position:absolute;top:44px;left:12px;z-index:45;display:flex;flex-wrap:wrap;gap:4px;background:rgba(16,8,34,.86);border:1.5px solid #ff7eb6;border-radius:10px;padding:5px 7px;font:bold 11px " + FONT + ";color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.45);max-width:340px;";
+    bar.style.cssText = "position:absolute;top:37%;left:14px;z-index:45;display:flex;flex-direction:column;gap:5px;background:rgba(16,8,34,.88);border:1.5px solid #ff7eb6;border-radius:10px;padding:6px 8px;font:bold 11px " + FONT + ";color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.45);max-width:320px;";
     bar.innerHTML =
-      '<span style="color:#ffd84d;align-self:center;margin-right:2px">★ ADMIN:</span>' +
-      [0, 1, 2, 3, 4].map(i => '<button type="button" data-tp="' + i + '" style="padding:3px 6px;border-radius:6px;border:1px solid #9b5de5;background:#2f1954;color:#fff;cursor:pointer;font-size:11px">Ch' + (i + 1) + '</button>').join("") +
-      '<button type="button" id="admKillMobs" style="padding:3px 7px;border-radius:6px;border:1px solid #ff6b8b;background:#591934;color:#fff;cursor:pointer;font-size:11px">Kill Mobs</button>' +
-      '<button type="button" id="admKillBoss" style="padding:3px 7px;border-radius:6px;border:1px solid #ff9a1a;background:#5e2d0c;color:#ffd84d;cursor:pointer;font-size:11px">Kill Boss</button>' +
-      '<button type="button" id="admImmortal" style="padding:3px 7px;border-radius:6px;border:1px solid #5ce1ff;background:#163859;color:#9fe7ff;cursor:pointer;font-size:11px">Immortal: OFF</button>';
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+        '<span style="color:#ffd84d">★ ADMIN</span>' +
+        '<button type="button" id="admMinMax" title="Minimize / Maximize Admin Panel" style="padding:1px 7px;border-radius:6px;border:1px solid #c98ae6;background:#2f1954;color:#fff;cursor:pointer;font-size:12px;line-height:1.3">−</button>' +
+      '</div>' +
+      '<div id="admBody" style="display:flex;flex-wrap:wrap;gap:4px">' +
+        [0, 1, 2, 3, 4].map(i => '<button type="button" data-tp="' + i + '" style="padding:3px 6px;border-radius:6px;border:1px solid #9b5de5;background:#2f1954;color:#fff;cursor:pointer;font-size:11px">Ch' + (i + 1) + '</button>').join("") +
+        '<button type="button" id="admKillMobs" style="padding:3px 7px;border-radius:6px;border:1px solid #ff6b8b;background:#591934;color:#fff;cursor:pointer;font-size:11px">Kill Mobs</button>' +
+        '<button type="button" id="admKillBoss" style="padding:3px 7px;border-radius:6px;border:1px solid #ff9a1a;background:#5e2d0c;color:#ffd84d;cursor:pointer;font-size:11px">Kill Boss</button>' +
+        '<button type="button" id="admImmortal" style="padding:3px 7px;border-radius:6px;border:1px solid #5ce1ff;background:#163859;color:#9fe7ff;cursor:pointer;font-size:11px">Immortal: OFF</button>' +
+        '<button type="button" id="admShop" style="padding:3px 7px;border-radius:6px;border:1px solid #ffd84d;background:#4a3510;color:#ffe680;cursor:pointer;font-size:11px">Open Shop</button>' +
+      '</div>';
     wrap.appendChild(bar);
+
+    $("admMinMax").onclick = () => {
+      adminMinimized = !adminMinimized;
+      $("admBody").style.display = adminMinimized ? "none" : "flex";
+      $("admMinMax").textContent = adminMinimized ? "+" : "−";
+      SFX.blip();
+    };
 
     bar.querySelectorAll("[data-tp]").forEach(btn => {
       btn.onclick = () => {
@@ -246,6 +262,16 @@ function ensureAdminUI() {
       }
       store();
       updateAdminImmortalBtn();
+    };
+
+    $("admShop").onclick = () => {
+      if (!save.isAdmin) return;
+      if (B && B.tm) clearTimeout(B.tm);
+      B = null; Q = []; after = null; introOn = false; candE = null; setPause(false);
+      $("dlg").hidden = true; $("battle").hidden = true; $("askFight").hidden = true; $("end").hidden = true;
+      keys.left = keys.right = keys.jump = 0;
+      SFX.blip();
+      openShop(S == "sit" ? "sit" : "play");
     };
   }
   updateAdminImmortalBtn();
@@ -327,18 +353,336 @@ function openReplayModal() {
   SFX.blip();
 }
 
+function ensureReplayGuideUI() {
+  let gWrap = $("replayGuideWrap");
+  if (!gWrap) {
+    gWrap = document.createElement("div");
+    gWrap.id = "replayGuideWrap";
+    gWrap.style.cssText = "position:relative;display:inline-flex;align-items:center;justify-content:center;";
+    const newBtn = $("new");
+    newBtn.parentNode.insertBefore(gWrap, newBtn);
+    gWrap.appendChild(newBtn);
+
+    const qBtn = document.createElement("button");
+    qBtn.id = "replayQBtn";
+    qBtn.type = "button";
+    qBtn.textContent = "?";
+    qBtn.title = "Chapter Replay Guide";
+    qBtn.style.cssText =
+      "position:absolute;top:-38px;left:50%;transform:translateX(-50%);" +
+      "width:28px;height:28px;min-width:28px;min-height:28px;max-width:28px;max-height:28px;aspect-ratio:1/1;" +
+      "padding:0;margin:0;line-height:1;box-sizing:border-box;display:flex;align-items:center;justify-content:center;" +
+      "border-radius:50%;border:2px solid #ffd84d;background:radial-gradient(circle at 30% 30%,#ff7eb6,#5b3aa8);color:#fff;" +
+      "font:bold 15px " + FONT + ";cursor:pointer;box-shadow:0 0 12px rgba(255,216,77,.65);z-index:5;" +
+      "animation:floatQ 1.8s ease-in-out infinite;";
+
+    const tip = document.createElement("div");
+    tip.id = "replayQTip";
+    tip.hidden = !replayGuideOpen;
+    tip.textContent = "you can play chapters again after defeating the game";
+    tip.style.cssText =
+      "position:absolute;bottom:calc(100% + 42px);left:50%;transform:translateX(-50%);width:230px;" +
+      "background:rgba(20,10,42,.95);border:1.5px solid #ffd84d;border-radius:10px;padding:8px 11px;" +
+      "color:#fff6d6;font:bold 12px/1.35 " + FONT + ";text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.55);z-index:6;pointer-events:none;";
+
+    if (!document.getElementById("floatQStyle")) {
+      const st = document.createElement("style");
+      st.id = "floatQStyle";
+      st.textContent = "@keyframes floatQ{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-5px)}}";
+      document.head.appendChild(st);
+    }
+
+    qBtn.onclick = e => {
+      e.stopPropagation();
+      replayGuideOpen = !replayGuideOpen;
+      tip.hidden = !replayGuideOpen;
+      SFX.blip();
+    };
+
+    gWrap.appendChild(qBtn);
+    gWrap.appendChild(tip);
+  }
+  const qBtn = $("replayQBtn");
+  const tip = $("replayQTip");
+  if (qBtn) qBtn.hidden = $("new").hidden;
+  if (tip) tip.hidden = $("new").hidden || !replayGuideOpen;
+}
+
+/* ---------- Devs / Creators (Group 7) Bunny Doodle Modal ---------- */
+const GROUP_7_DEVS = [
+  { name: "Fernando", action: "coding bugs & fixing saves", activity: "code" },
+  { name: "Reshie", action: "sketching cute bunnies", activity: "draw" },
+  { name: "Patrick", action: "sipping iced coffee & testing", activity: "coffee" },
+  { name: "Lance", action: "writing calculus traps", activity: "math" },
+  { name: "Jerico", action: "chasing high scores", activity: "star" }
+];
+
+let devsAnimRaf = 0;
+
+function stopDevsAnim() {
+  if (devsAnimRaf) {
+    cancelAnimationFrame(devsAnimRaf);
+    devsAnimRaf = 0;
+  }
+}
+
+function drawBunnyDoodle(ctx, idx, activity, t) {
+  const w = ctx.width, h = ctx.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const bob = Math.sin(t / 12 + idx * 1.4) * 2.5;
+  const earW = Math.sin(t / 16 + idx) * 0.14;
+  const cx = w / 2, cy = h * 0.62 + bob;
+
+  ctx.save();
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  // Doodle background squiggles / stars
+  ctx.strokeStyle = "rgba(255, 216, 77, 0.25)";
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(16 + (idx * 7) % 14, 16, 3.5 + Math.sin(t / 14 + idx) * 1, 0, 7);
+  ctx.stroke();
+
+  // Bunny ears
+  const earTint = ["#ffe8f3", "#e8f4ff", "#fff4d4", "#efe6ff", "#e4fff2"][idx % 5];
+  for (const [ox, ang] of [[-7, -0.22], [7, 0.22]]) {
+    ctx.save();
+    ctx.translate(cx + ox, cy - 12);
+    ctx.rotate(ang + earW);
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "#2b1942";
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.ellipse(0, -10, 4.5, 11.5, 0, 0, 7);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = earTint;
+    ctx.beginPath();
+    ctx.ellipse(0, -10, 2.2, 7.5, 0, 0, 7);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Bunny head
+  ctx.fillStyle = "#ffffff";
+  ctx.strokeStyle = "#2b1942";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, 14.5, 12.5, 0, 0, 7);
+  ctx.fill();
+  ctx.stroke();
+
+  // Cheeks
+  ctx.fillStyle = "rgba(255, 126, 182, 0.55)";
+  ctx.beginPath();
+  ctx.ellipse(cx - 8.5, cy + 3, 2.8, 1.7, 0, 0, 7);
+  ctx.ellipse(cx + 8.5, cy + 3, 2.8, 1.7, 0, 0, 7);
+  ctx.fill();
+
+  // Eyes & smile
+  ctx.fillStyle = "#2b1942";
+  ctx.beginPath();
+  ctx.arc(cx - 5, cy - 1.5, 2.1, 0, 7);
+  ctx.arc(cx + 5, cy - 1.5, 2.1, 0, 7);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(cx - 5.6, cy - 2.2, 0.8, 0, 7);
+  ctx.arc(cx + 4.4, cy - 2.2, 0.8, 0, 7);
+  ctx.fill();
+
+  ctx.strokeStyle = "#2b1942";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy + 2.5, 3, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.stroke();
+
+  // Doodle props showing random things each bunny is doing
+  if (activity === "code") {
+    ctx.fillStyle = "#5ce1ff";
+    ctx.strokeStyle = "#1b2845";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.roundRect(cx - 10, cy + 9, 20, 11, 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#1b2845";
+    ctx.font = "bold 7px monospace";
+    ctx.fillText("</>", cx - 6.5, cy + 17);
+  } else if (activity === "draw") {
+    const tilt = Math.sin(t / 10) * 0.25;
+    ctx.save();
+    ctx.translate(cx + 13, cy + 10);
+    ctx.rotate(-0.5 + tilt);
+    ctx.fillStyle = "#ff7eb6";
+    ctx.strokeStyle = "#2b1942";
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.roundRect(-2, -10, 4.5, 13, 1.5);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#ffd84d";
+    ctx.beginPath();
+    ctx.moveTo(-2, 3); ctx.lineTo(2.5, 3); ctx.lineTo(0.25, 7);
+    ctx.fill();
+    ctx.restore();
+  } else if (activity === "coffee") {
+    ctx.fillStyle = "#b87344";
+    ctx.strokeStyle = "#2b1942";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.roundRect(cx + 7, cy + 7, 10, 10, 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,0.75)";
+    ctx.lineWidth = 1.3;
+    const steam = Math.sin(t / 8) * 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + 10, cy + 4); ctx.quadraticCurveTo(cx + 8 + steam, cy + 1, cx + 11, cy - 2);
+    ctx.moveTo(cx + 14, cy + 4); ctx.quadraticCurveTo(cx + 16 - steam, cy + 1, cx + 13, cy - 2);
+    ctx.stroke();
+  } else if (activity === "math") {
+    ctx.fillStyle = "#ffd84d";
+    ctx.font = "bold 11px Georgia,serif";
+    ctx.fillText("dy/dx", cx - 15, cy + 19 + Math.sin(t / 11) * 1.5);
+  } else {
+    ctx.fillStyle = "#ffd84d";
+    ctx.strokeStyle = "#2b1942";
+    ctx.lineWidth = 1.2;
+    const sy = cy + 13 + Math.cos(t / 9) * 2;
+    ctx.beginPath();
+    ctx.arc(cx + 12, sy, 4.5, 0, 7);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function renderDevsDoodles() {
+  const box = $("devsBox");
+  if (!box || box.hidden) {
+    devsAnimRaf = 0;
+    return;
+  }
+  const t = performance.now() / 16.666;
+  box.querySelectorAll("canvas[data-dev-idx]").forEach(cv => {
+    const idx = parseInt(cv.dataset.devIdx, 10);
+    const dev = GROUP_7_DEVS[idx];
+    if (dev) drawBunnyDoodle(cv, idx, dev.activity, t);
+  });
+  devsAnimRaf = requestAnimationFrame(renderDevsDoodles);
+}
+
+function ensureDevsUI() {
+  let box = $("devsBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "devsBox";
+    box.hidden = true;
+    box.style.cssText =
+      "position:absolute;inset:0;z-index:58;display:none;flex-direction:column;align-items:center;justify-content:center;" +
+      "background:rgba(11,5,24,.86);backdrop-filter:blur(4px);color:#fff;font-family:" + FONT + ";text-align:center;padding:14px;";
+
+    const cards = GROUP_7_DEVS.map((d, i) =>
+      '<div style="width:124px;background:rgba(33,16,64,.95);border:1.5px solid #c98ae6;border-radius:14px;padding:8px 8px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 6px 16px rgba(0,0,0,.4);">' +
+        '<canvas data-dev-idx="' + i + '" width="72" height="64" style="width:72px;height:64px;border-radius:10px;background:rgba(16,8,34,.75);border:1px solid rgba(255,216,77,.3);"></canvas>' +
+        '<div style="font-weight:bold;font-size:13px;color:#ffd84d;line-height:1.15;">' + d.name + '</div>' +
+        '<div style="font-size:10.5px;color:#e8dcff;line-height:1.25;">' + d.action + '</div>' +
+      '</div>'
+    ).join("");
+
+    box.innerHTML =
+      '<div style="background:rgba(24,11,48,.96);border:2px solid #ff7eb6;border-radius:20px;padding:16px 20px;width:min(94%,700px);box-shadow:0 0 36px rgba(255,126,182,.35);">' +
+        '<div style="font:bold 22px Georgia,serif;color:#ffd84d;margin-bottom:2px;">Group 7 · Game Creators</div>' +
+        '<div style="font-size:12px;color:#9fe7ff;margin-bottom:12px;">Bunny doodle profiles of the devs</div>' +
+        '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-bottom:14px;">' + cards + '</div>' +
+        '<button type="button" id="devsCloseBtn" style="padding:7px 22px;border-radius:999px;border:1.5px solid rgba(255,255,255,.38);background:rgba(255,255,255,.12);color:#fff;font:bold 13px ' + FONT + ';cursor:pointer;">Back</button>' +
+      '</div>';
+
+    wrap.appendChild(box);
+    $("devsCloseBtn").onclick = closeDevsModal;
+  }
+
+  let btn = $("devsBtn");
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.id = "devsBtn";
+    btn.type = "button";
+    btn.textContent = "Group 7 · Devs";
+    btn.title = "Meet the Creators (Group 7)";
+    btn.style.cssText =
+      "position:absolute;bottom:14px;left:16px;z-index:25;display:none;" +
+      "padding:8px 14px;border-radius:999px;border:1.5px solid #ffd84d;" +
+      "background:linear-gradient(135deg,rgba(45,19,86,.92),rgba(138,59,138,.92));" +
+      "color:#fff6d6;font:bold 13px " + FONT + ";cursor:pointer;" +
+      "box-shadow:0 4px 16px rgba(0,0,0,.45),0 0 12px rgba(255,216,77,.35);";
+    btn.onclick = openDevsModal;
+    wrap.appendChild(btn);
+  }
+}
+
+function updateDevsBtnVisibility() {
+  ensureDevsUI();
+  const btn = $("devsBtn");
+  if (!btn) return;
+  const show = !!(activeUser && S === "title" && !$("title").hidden);
+  btn.style.display = show ? "inline-flex" : "none";
+  if (!show) {
+    const box = $("devsBox");
+    if (box && !box.hidden) {
+      box.hidden = true;
+      box.style.display = "none";
+      stopDevsAnim();
+    }
+  }
+}
+
+function openDevsModal() {
+  ensureDevsUI();
+  const box = $("devsBox");
+  box.hidden = false;
+  box.style.display = "flex";
+  SFX.blip();
+  renderDevsDoodles();
+}
+
+function closeDevsModal() {
+  const box = $("devsBox");
+  if (box) {
+    box.hidden = true;
+    box.style.display = "none";
+  }
+  stopDevsAnim();
+  SFX.blip();
+}
+
 function updateTitleButtons() {
-  if (save.completed) {
+  const isCompleted = !!save.completed;
+  if (isCompleted) {
     $("new").hidden = false;
     $("new").textContent = "Re-play Chapters";
     const activeReplay = !!(save.replaying && (save.started || save.bx != null || (save.w && save.w > 0)));
     $("cont").hidden = !activeReplay;
-    return;
+  } else {
+    $("new").textContent = "New Game";
+    const prog = hasProgress();
+    $("new").hidden = prog;
+    $("cont").hidden = !prog;
   }
-  $("new").textContent = "New Game";
-  const prog = hasProgress();
-  $("new").hidden = prog;
-  $("cont").hidden = !prog;
+  ensureReplayGuideUI();
+  const qBtn = $("replayQBtn");
+  const tip = $("replayQTip");
+  if (!isCompleted) {
+    replayGuideOpen = false;
+  }
+  if (qBtn) qBtn.hidden = !isCompleted;
+  if (tip) tip.hidden = !isCompleted || !replayGuideOpen;
+}
+  updateDevsBtnVisibility();
 }
 
 function loginSuccess(key, data) {
@@ -351,6 +695,7 @@ function loginSuccess(key, data) {
   $("loginBox").hidden = true;
   $("title").hidden = false;
   updateTitleButtons();
+  updateDevsBtnVisibility();
   S = "title";
   idle = Date.now();
   ensureAdminUI();
@@ -426,6 +771,7 @@ $("exitAcc").onclick = () => {
   $("loginStep1").hidden = false;
   $("loginStep2").hidden = true;
   $("loginBox").hidden = false;
+  updateDevsBtnVisibility();
   S = "login"; cam = 0;
   setTimeout(() => $("nameIn").focus(), 30);
 };
@@ -437,16 +783,16 @@ const FF = Array.from({ length: 34 }, (_, i) => ({ x: (i * 97) % 800, y: 60 + (i
 
 const CK = {
   c0: { n: "Starlight Cloak", p: 0, c: "#5b3aa8", t: "#ffd27a", sc: "#c9a7ff", sp: "star", d: "Purple star bolts." },
-  c1: { n: "Ember Cloak", p: 40, c: "#c4381f", t: "#ffb04d", sc: "#ff8a2a", sp: "fire", d: "Fire spells. Leaves glowing lava dust and embers when you walk, and fire bombs when you fly." },
-  c2: { n: "Frost Cloak", p: 60, c: "#3d8fd6", t: "#e6f6ff", sc: "#9fe7ff", sp: "ice", d: "Ice spells. Freezes the ground you walk on and leaves glittering ice mist when you fly." },
-  c3: { n: "Cloud Cloak", p: 90, c: "#e8f1ff", t: "#9fc4ff", sc: "#dff0ff", sp: "wind", ab: "float", d: "Hold Jump in the air to float. Wind spells." },
-  c4: { n: "Wing Cloak", p: 140, c: "#ffe9a8", t: "#ffffff", sc: "#fff6b0", sp: "light", ab: "wings", d: "Grows wings: flap twice in the air. Light spells." }
+  c1: { n: "Ember Cloak", p: 50, c: "#c4381f", t: "#ffb04d", sc: "#ff8a2a", sp: "fire", d: "Fire spells. Leaves glowing lava dust and embers when you walk, and fire bombs when you fly." },
+  c2: { n: "Frost Cloak", p: 100, c: "#3d8fd6", t: "#e6f6ff", sc: "#9fe7ff", sp: "ice", d: "Ice spells. Freezes the ground you walk on and leaves glittering ice mist when you fly." },
+  c3: { n: "Cloud Cloak", p: 150, c: "#e8f1ff", t: "#9fc4ff", sc: "#dff0ff", sp: "wind", ab: "float", d: "Hold Jump in the air to float. Wind spells." },
+  c4: { n: "Wing Cloak", p: 300, c: "#ffe9a8", t: "#ffffff", sc: "#fff6b0", sp: "light", ab: "wings", d: "Grows wings: flap twice in the air. Light spells." }
 };
 const BK = {
-  b0: { n: "Classic Spellbook", p: 0, c: "#e0577b" },
-  b1: { n: "Golden Tome", p: 30, c: "#e8b923" },
-  b2: { n: "Galaxy Tome", p: 50, c: "#4b2aa8" },
-  b3: { n: "Rainbow Tome", p: 70, c: "rainbow" }
+  b0: { n: "Classic Spellbook", p: 0, c: "#d9436b", trim: "#ffd86b", gem: "#ff9ad5", d: "Crimson leather grimoire with brass corners and a rose crystal." },
+  b1: { n: "Golden Tome", p: 50, c: "#e6a817", trim: "#fff4b8", gem: "#5ce1ff", d: "Gilded royal tome with sun-embossed filigree and an azure sapphire." },
+  b2: { n: "Galaxy Tome", p: 100, c: "#341c78", trim: "#b98aff", gem: "#7de3ff", d: "Nebula-bound codex with twinkling stars and a crescent moon emblem." },
+  b3: { n: "Rainbow Tome", p: 200, c: "rainbow", trim: "#ffffff", gem: "#fff27a", d: "Prismatic enchanted tome that shifts hues and trails rainbow sparkles." }
 };
 const cur = () => CK[save.cloak] || CK.c0;
 
@@ -652,7 +998,7 @@ $("new").onclick = () => {
     openReplayModal();
     return;
   }
-  save = { displayName: save.displayName, isAdmin: save.isAdmin, immortal: !!save.immortal, tut: save.tut, own: save.own, cloak: save.cloak, skin: save.skin, coins: save.isAdmin ? 99999 : save.coins, dev: save.dev, started: true, w: 0, hp: 3 };
+  save = { displayName: save.displayName, isAdmin: save.isAdmin, immortal: !!save.immortal, tut: save.tut, own: save.own, cloak: save.cloak, skin: save.skin, fountains: save.fountains || {}, coins: save.isAdmin ? 99999 : save.coins, dev: save.dev, started: true, w: 0, hp: 3 };
   store(); $("title").hidden = true; introOn = true;
   say([
     ["Spellbook", "Long ago, one Heart Crystal kept the magic of every world alive."],
@@ -732,6 +1078,7 @@ function closeShop() {
   stopShopAnim();
   $("shop").hidden = true;
   if (shopFrom == "title") { S = "title"; $("title").hidden = false; updateTitleButtons(); }
+  else if (shopFrom == "play") { S = "play"; }
   else S = "sit";
 }
 
@@ -748,14 +1095,12 @@ function drawShopPreviews() {
   const bk = BK[bkId] || BK.b0;
   const t = performance.now() / 16.666;
 
-  // Stage cards inside canvas
   ctx.fillStyle = "rgba(18, 10, 38, 0.58)";
   ctx.beginPath();
   ctx.roundRect(6, 4, Wc / 2 - 10, Hc - 8, 10);
   ctx.roundRect(Wc / 2 + 4, 4, Wc / 2 - 10, Hc - 8, 10);
   ctx.fill();
 
-  // --- LEFT STAGE: Monica wearing previewed cloak + spell orb ---
   const cx1 = Wc * 0.25, cy1 = Hc - 20;
   ctx.save();
   ctx.translate(cx1 - 12, cy1);
@@ -763,7 +1108,6 @@ function drawShopPreviews() {
   ctx.lineCap = "round";
   const bob = Math.sin(t / 16) * 1.5;
 
-  // Wings if c4
   if (ck.ab == "wings") {
     ctx.fillStyle = "rgba(255,248,215,.95)";
     ctx.strokeStyle = "#e6c86e";
@@ -780,7 +1124,6 @@ function drawShopPreviews() {
       ctx.restore();
     }
   }
-  // Cloud if c3
   if (ck.ab == "float") {
     ctx.fillStyle = "rgba(255,255,255,.9)";
     for (let i = 0; i < 3; i++) {
@@ -790,45 +1133,51 @@ function drawShopPreviews() {
     }
   }
 
-  // Cape back
-  ctx.fillStyle = ck.c;
-  ctx.strokeStyle = "#3c2b5e";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(-2, -23 - bob);
-  ctx.quadraticCurveTo(-14, -14 - bob, -18 - Math.sin(t / 12) * 3, -3);
-  ctx.quadraticCurveTo(-10, 1, -2, -4 - bob);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
+  if (ckId === "c1" || ckId === "c2") {
+    drawCustomCloakLayer(ctx, ckId, {
+      t,
+      bob,
+      sway: 6 + Math.sin(t / 12) * 3,
+      lift: 0,
+      hemY: -3 - bob * 0.5,
+      mini: false
+    });
+  } else {
+    ctx.fillStyle = ck.c;
+    ctx.strokeStyle = "#3c2b5e";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-2, -23 - bob);
+    ctx.quadraticCurveTo(-14, -14 - bob, -18 - Math.sin(t / 12) * 3, -3);
+    ctx.quadraticCurveTo(-10, 1, -2, -4 - bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
 
-  // Cloak body
-  ctx.beginPath();
-  ctx.moveTo(-7, -22 - bob);
-  ctx.lineTo(8, -22 - bob);
-  ctx.lineTo(11, -3 - bob * 0.5);
-  ctx.quadraticCurveTo(5.5, -bob * 0.5, 0, -3 - bob * 0.5);
-  ctx.quadraticCurveTo(-5.5, -bob * 0.5, -10, -3 - bob * 0.5);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-7, -22 - bob);
+    ctx.lineTo(8, -22 - bob);
+    ctx.lineTo(11, -3 - bob * 0.5);
+    ctx.quadraticCurveTo(5.5, -bob * 0.5, 0, -3 - bob * 0.5);
+    ctx.quadraticCurveTo(-5.5, -bob * 0.5, -10, -3 - bob * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
 
-  // Trim
-  ctx.strokeStyle = ck.t;
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.moveTo(-9.5, -4.5 - bob * 0.5);
-  ctx.quadraticCurveTo(-5.5, -1.5 - bob * 0.5, 0, -4.5 - bob * 0.5);
-  ctx.quadraticCurveTo(5.5, -1.5 - bob * 0.5, 10.5, -4.5 - bob * 0.5);
-  ctx.stroke();
+    ctx.strokeStyle = ck.t;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-9.5, -4.5 - bob * 0.5);
+    ctx.quadraticCurveTo(-5.5, -1.5 - bob * 0.5, 0, -4.5 - bob * 0.5);
+    ctx.quadraticCurveTo(5.5, -1.5 - bob * 0.5, 10.5, -4.5 - bob * 0.5);
+    ctx.stroke();
 
-  // Clasp
-  ctx.fillStyle = "#ffd84d";
-  ctx.beginPath();
-  ctx.arc(4, -21 - bob, 2.5, 0, 7);
-  ctx.fill();
+    ctx.fillStyle = "#ffd84d";
+    ctx.beginPath();
+    ctx.arc(4, -21 - bob, 2.5, 0, 7);
+    ctx.fill();
+  }
 
-  // Head & Ears
   [[-3.5, -0.16, 0.92], [5.5, 0.14, 1]].forEach(([ex, r, sc]) => {
     ctx.save();
     ctx.translate(ex, -38 - bob);
@@ -862,7 +1211,6 @@ function drawShopPreviews() {
   ctx.fill();
   ctx.stroke();
 
-  // Eyes
   ctx.fillStyle = "#2b4c9b";
   ctx.beginPath();
   ctx.ellipse(7.5, -32.5 - bob, 2.3, 3, 0, 0, 7);
@@ -874,7 +1222,6 @@ function drawShopPreviews() {
   ctx.arc(-0.3, -33.5 - bob, 0.9, 0, 7);
   ctx.fill();
 
-  // Orbiting spell orb preview
   const sx = 32, sy = -28 + Math.sin(t / 10) * 4;
   ctx.shadowColor = ck.sc;
   ctx.shadowBlur = 14;
@@ -885,44 +1232,13 @@ function drawShopPreviews() {
   ctx.shadowBlur = 0;
   ctx.restore();
 
-  // Cloak label
   ctx.fillStyle = "#ffd27a";
   ctx.font = "bold 11px " + FONT;
   ctx.textAlign = "center";
   ctx.fillText(ck.n, cx1, Hc - 6);
 
-  // --- RIGHT STAGE: Floating Spellbook Skin ---
-  const cx2 = Wc * 0.75, cy2 = Hc * 0.43 + Math.sin(t / 14) * 3.5;
-  ctx.save();
-  ctx.translate(cx2, cy2);
-  ctx.shadowColor = bk.c == "rainbow" ? "hsl(" + (t * 3 % 360) + ",85%,65%)" : bk.c;
-  ctx.shadowBlur = 16;
-  ctx.fillStyle = bk.c == "rainbow" ? "hsl(" + (t * 3 % 360) + ",85%,60%)" : bk.c;
-  ctx.strokeStyle = "#fff";
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.roundRect(-24, -17, 48, 34, 5);
-  ctx.fill();
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-
-  // Spine & Pages
-  ctx.fillStyle = "rgba(0,0,0,0.28)";
-  ctx.fillRect(-24, -17, 7, 34);
-  ctx.fillStyle = "#fff8e7";
-  ctx.fillRect(-15, -13, 35, 4);
-  ctx.fillRect(-15, 9, 35, 4);
-
-  // Cover Emblem
-  ctx.fillStyle = "#ffd84d";
-  ctx.beginPath();
-  ctx.moveTo(4, -7);
-  ctx.lineTo(10, 0);
-  ctx.lineTo(4, 7);
-  ctx.lineTo(-2, 0);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
+  const cx2 = Wc * 0.75, cy2 = Hc * 0.44 + Math.sin(t / 14) * 3.5;
+  drawSpellbook3D(ctx, cx2, cy2, bkId, t, 1.85);
 
   ctx.fillStyle = "#9fe7ff";
   ctx.font = "bold 11px " + FONT;
@@ -941,14 +1257,98 @@ function renderShop(msg) {
   if (!prevCloak) prevCloak = eqC;
   if (!prevBook) prevBook = eqB;
 
-  const swatch = (item, isCloak) => {
-    if (isCloak) {
-      return '<span class="sw" style="background:' + item.c + ';border-color:' + item.t + ';box-shadow:0 0 8px ' + item.sc + '"></span>';
+  const renderMiniItemIcon = (cv, id) => {
+    const ctx = cv.getContext("2d");
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    if (id[0] === "b") {
+      drawSpellbook3D(ctx, 21, 21, id, 24, 1.28);
+      return;
     }
-    const bg = item.c === "rainbow"
-      ? "linear-gradient(135deg,#ff5964,#ffca3a,#8ac926,#1982c4,#6a4c93)"
-      : item.c;
-    return '<span class="sw sw-book" style="background:' + bg + '"></span>';
+    const ck = CK[id] || CK.c0;
+    ctx.save();
+    ctx.translate(21, 23);
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+
+    if (ck.ab === "wings") {
+      ctx.fillStyle = "rgba(255,248,215,.95)";
+      ctx.strokeStyle = "#e6c86e";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(-11, -5, 8, 4, -0.45, 0, 7);
+      ctx.ellipse(11, -5, 8, 4, 0.45, 0, 7);
+      ctx.fill();
+      ctx.stroke();
+    }
+    if (ck.ab === "float") {
+      ctx.fillStyle = "rgba(255,255,255,.92)";
+      ctx.beginPath();
+      ctx.arc(-6, 12, 4.5, 0, 7);
+      ctx.arc(0, 13, 5, 0, 7);
+      ctx.arc(6, 12, 4.5, 0, 7);
+      ctx.fill();
+    }
+
+    if (id === "c1" || id === "c2") {
+      ctx.save();
+      ctx.translate(0, 12);
+      ctx.scale(1.02, 1.02);
+      drawCustomCloakLayer(ctx, id, {
+        t: 24,
+        bob: 0,
+        sway: 6,
+        lift: 0,
+        hemY: -4,
+        mini: true
+      });
+      ctx.restore();
+    } else {
+      ctx.shadowColor = ck.sc;
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = ck.c;
+      ctx.strokeStyle = "#24133d";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-7, -12);
+      ctx.quadraticCurveTo(0, -15, 7, -12);
+      ctx.lineTo(13, 9);
+      ctx.quadraticCurveTo(6.5, 12.5, 0, 9.5);
+      ctx.quadraticCurveTo(-6.5, 12.5, -13, 9);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.strokeStyle = ck.t;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-11.5, 7.5);
+      ctx.quadraticCurveTo(-6, 10.5, 0, 7.8);
+      ctx.quadraticCurveTo(6, 10.5, 11.5, 7.5);
+      ctx.stroke();
+
+      ctx.fillStyle = ck.c;
+      ctx.strokeStyle = "#24133d";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(-8, -12);
+      ctx.quadraticCurveTo(0, -6, 8, -12);
+      ctx.lineTo(6, -15);
+      ctx.lineTo(-6, -15);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#ffd84d";
+      ctx.beginPath();
+      ctx.arc(0, -9.5, 2.4, 0, 7);
+      ctx.fill();
+    }
+    ctx.restore();
+  };
+
+  const swatch = (id) => {
+    return '<canvas class="item-icon-cv" data-icon="' + id + '" width="42" height="42" style="width:42px;height:42px;flex:0 0 42px;border-radius:10px;background:rgba(16,8,34,.75);border:1.5px solid rgba(255,255,255,.22);"></canvas>';
   };
 
   const buildCol = (T, eq, prevId, lab, isCloak) => {
@@ -956,7 +1356,7 @@ function renderShop(msg) {
     for (const id in T) {
       const i = T[id], o = own.includes(id), isPrev = prevId === id;
       col += '<div class="row' + (isPrev ? ' active-prev' : '') + '" data-prev="' + id + '">' +
-        '<div class="item-meta">' + swatch(i, isCloak) +
+        '<div class="item-meta">' + swatch(id) +
         '<span><b>' + i.n + '</b>' + (i.d ? '<br><small>' + i.d + '</small>' : '') + '</span></div>' +
         '<button type="button" data-id="' + id + '">' + (eq == id ? 'Equipped' : o ? 'Equip' : i.p + ' coins') + '</button>' +
         '</div>';
@@ -996,6 +1396,9 @@ function renderShop(msg) {
   $("shop").querySelectorAll("[data-id]").forEach(b => b.onclick = e => {
     e.stopPropagation();
     buy(b.dataset.id);
+  });
+  $("shop").querySelectorAll("canvas[data-icon]").forEach(cv => {
+    renderMiniItemIcon(cv, cv.dataset.icon);
   });
   $("sclose").onclick = closeShop;
   drawShopPreviews();
@@ -1045,15 +1448,51 @@ function ok(s, f) {
   s = s.replace(/(\d|\))(x|\()/g, "$1*$2").replace(/\^/g, "**");
   try { const g = new Function("x", "return " + s); return [-2, .5, 1, 3].every(v => Math.abs(g(v) - f(v)) < 1e-6 * Math.max(1, Math.abs(f(v)))); } catch (e) { return false; }
 }
+function resetBattleTimer() {
+  if (!B) return;
+  const dur = B.e.boss ? 120000 : 60000;
+  B.turnDur = dur;
+  B.deadline = Date.now() + dur;
+}
 function ask(keep) {
-  B.q = gen(B.e.t); $("bq").textContent = B.q.d; $("ans").value = "";
+  let nextQ = gen(B.e.t);
+  if (B.q && nextQ.d === B.q.d) {
+    for (let i = 0; i < 15; i++) {
+      const cand = gen0(B.e.t);
+      if (cand.d !== B.q.d) { nextQ = cand; seen.add(cand.d); break; }
+    }
+  }
+  B.q = nextQ;
+  $("bq").textContent = B.q.d;
+  $("ans").value = "";
+  resetBattleTimer();
   if (!keep) $("bmsg").textContent = "";
-  clearTimeout(B.tm); B.tm = setTimeout(() => { $("bmsg").textContent = "Monica: “Are you solving it or writing a whole research paper?”"; }, 25000);
+  clearTimeout(B.tm);
+  B.tm = setTimeout(() => {
+    if (S == "battle" && B && !B.cast) {
+      $("bmsg").textContent = "Monica: “Hurry up! The timer is ticking down!”";
+    }
+  }, B.e.boss ? 45000 : 25000);
   setTimeout(() => $("ans").focus(), 30);
 }
 function startBattle(e) {
-  S = "battle"; keys.left = keys.right = keys.jump = 0; B = { e, left: e.q, strikes: 3, age: 0, lunge: 0, cast: null }; parts = []; SFX.alert();
+  S = "battle"; keys.left = keys.right = keys.jump = 0;
+  B = { e, left: e.q, strikes: 3, age: 0, lunge: 0, cast: null, turnDur: e.boss ? 120000 : 60000, deadline: Date.now() + (e.boss ? 120000 : 60000) };
+  parts = []; SFX.alert();
   $("battle").hidden = false; $("btaunt").textContent = e.n + ": “" + e.taunt + "”"; $("bhint").textContent = HINT[e.t]; ask();
+}
+function penalizeRound(reasonMsg) {
+  B.strikes--;
+  flash = 14;
+  B.lunge = 22;
+  SFX.bad();
+  if (B.strikes <= 0) {
+    clearTimeout(B.tm);
+    loseFight();
+    return;
+  }
+  $("bmsg").textContent = reasonMsg + " (" + B.strikes + " round" + (B.strikes == 1 ? "" : "s") + " left)";
+  ask(1);
 }
 function submit() {
   if (S != "battle" || B.cast) return;
@@ -1061,22 +1500,26 @@ function submit() {
     clearTimeout(B.tm); B.cast = { t: 0, fin: B.left <= 1 }; SFX.cast();
     const m = pick(["HA! See? I knew you could do it!", "Easy. Take that!", "Magic never fails me!"]); $("bmsg").textContent = "Monica: “" + m + "”";
   } else {
-    B.strikes--; flash = 14; B.lunge = 22; SFX.bad();
-    if (B.strikes <= 0) { clearTimeout(B.tm); loseFight(); return; }
-    const m = pick(["Oh. Well… that was embarrassing.", "Ouch! Try again!", "Hey! Focus!"]);
-    $("bmsg").textContent = "Monica: “" + m + "” (" + B.strikes + " tries left)";
-    $("ans").select();
+    const m = pick(["Oh. Well… that was embarrassing.", "Ouch! Wrong spell! New question!", "Hey! Focus!"]);
+    penalizeRound("Monica: “" + m + "”");
   }
 }
 function loseFight() {
+  const e = B ? B.e : null;
   $("battle").hidden = true;
+  if (e && !e.boss) {
+    e.dead = true;
+  }
   if (save.isAdmin && save.immortal) {
     P.hp = P.max;
     save.hp = P.hp;
     store();
     invuln = 120;
     SFX.heal();
-    say([["Monica", "Nice try, monster! Admin Immortality blocked all heart damage!"], ["Spellbook", "No hearts lost (" + P.hp + "/" + P.max + " hearts)."]]);
+    const msg = e && !e.boss
+      ? [["Monica", "Admin Immortality blocked all heart damage!"], ["Spellbook", e.n + " vanished into the shadows anyway."]]
+      : [["Monica", "Admin Immortality blocked all heart damage!"], ["Spellbook", "The guardian remains. Challenge it again when ready!"]];
+    say(msg);
     return;
   }
   P.hp = Math.max(0, P.hp - 1);
@@ -1085,7 +1528,17 @@ function loseFight() {
   invuln = 120;
   if (P.hp <= 0) { die(); return; }
   SFX.bad();
-  say([["Monica", "Ow! That hurt… I lost a heart, but I'm not giving up!"], ["Spellbook", "You have " + P.hp + " heart" + (P.hp == 1 ? "" : "s") + " left. Keep moving!"]]);
+  if (e && !e.boss) {
+    say([
+      ["Monica", "Ow! I lost a heart… and " + e.n + " vanished!"],
+      ["Spellbook", "You have " + P.hp + " heart" + (P.hp == 1 ? "" : "s") + " left. Keep moving!"]
+    ]);
+  } else {
+    say([
+      ["Monica", "Ow! That hurt… I lost a heart, but the guardian is still standing!"],
+      ["Spellbook", "You have " + P.hp + " heart" + (P.hp == 1 ? "" : "s") + " left. Defeat the boss to unlock the portal!"]
+    ]);
+  }
 }
 function winFight() {
   const e = B.e; e.dead = true;
@@ -1109,6 +1562,11 @@ $("ans").addEventListener("keydown", e => { if (e.key == "Enter") { e.preventDef
 const KM = { ArrowLeft: "left", a: "left", A: "left", ArrowRight: "right", d: "right", D: "right", " ": "jump" };
 addEventListener("keydown", e => {
   idle = Date.now(); sfxInit();
+  const devsModal = $("devsBox");
+  if (devsModal && !devsModal.hidden) {
+    if (e.key == "Escape") closeDevsModal();
+    return;
+  }
   const repBox = $("replayBox");
   if (repBox && !repBox.hidden) {
     if (e.key == "Escape") { repBox.hidden = true; repBox.style.display = "none"; }
@@ -1128,7 +1586,7 @@ addEventListener("keydown", e => {
   if (e.key == "Escape" && (S == "play" || S == "sit")) { setPause(!paused); return; }
   if (paused) return;
   if (S == "dlg") { if (["Enter", " ", "e", "E"].includes(e.key)) { e.preventDefault(); next(); } return; }
-  if (S == "sit") { if ((e.key == "s" || e.key == "S") && sitT >= 50) { openShop("sit"); return; } if (e.key == "e" || e.key == "E" || KM[e.key]) { e.preventDefault(); stand(); } return; }
+  if (S == "sit") { if ((e.key == "s" || e.key == "S") && sitT >= 50) { openShop("sit"); return; } if (e.key == "e" || e.key == "E") { e.preventDefault(); stand(); } return; }
   if (e.key == "m" || e.key == "M") { mute = !mute; return; }
   if (KM[e.key]) {
     if (e.repeat && KM[e.key] == "jump") { e.preventDefault(); return; }
@@ -1159,13 +1617,33 @@ document.querySelectorAll("#touch [data-k]").forEach(b => {
     if (k == "pause") { if (S == "play" || S == "sit") setPause(!paused); return; }
     if (paused || S == "shop" || S == "battle" || S == "ask" || S == "login" || S == "finale" || S == "credits" || S == "gameover") return;
     if (S == "dlg") { next(); return; }
-    if (S == "sit") { stand(); return; }
+    if (S == "sit") { if (k == "act") stand(); return; }
     if (k == "act") act(); else keys[k] = 1;
   });
   ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, () => { if (keys[k] !== undefined) keys[k] = 0; }));
 });
 function act() {
   if (S != "play" || paused) return;
+  if (WI >= 1 && Math.abs(P.x + 14 - FOUNTAIN_X) < 65) {
+    save.fountains = save.fountains || {};
+    if (save.fountains[WI]) {
+      SFX.bad();
+      say([["Spellbook", "This Heart Fountain has already been claimed for Chapter " + (WI + 1) + "."]]);
+    } else {
+      save.fountains[WI] = true;
+      P.hp = P.max;
+      save.hp = P.hp;
+      store();
+      SFX.heal();
+      burst(FOUNTAIN_X, GY - 55, "#ff4f86");
+      burst(FOUNTAIN_X, GY - 55, "#fff2a6");
+      say([
+        ["Spellbook", "The Heart Fountain restores all 3 hearts! (One-time blessing for Chapter " + (WI + 1) + ")"],
+        ["Monica", "Ah, much better! Ready to take on the guardian!"]
+      ]);
+    }
+    return;
+  }
   for (const b of benches) if (Math.abs(P.x + 14 - b.x - 26) < 60) {
     S = "sit"; sitB = b; P.x = b.x + 12; P.y = GY - 40; P.vx = 0; P.face = 1; sitT = 0; lastB = b.x; keys.left = keys.right = keys.jump = 0; return;
   }
@@ -1232,11 +1710,23 @@ function updateCredits() {
 function spellPos(t, ex) { const p = Math.max(0, Math.min(1, (t - 6) / 22)); return { x: 205 + (ex - 45 - 205) * p, y: GY - 100 - Math.sin(p * Math.PI) * 45 }; }
 function bt() {
   B.age++; if (B.lunge > 0) B.lunge--;
-  const c = B.cast; if (!c) return; c.t++;
+  const c = B.cast;
+  if (!c) {
+    if (B.deadline && Date.now() >= B.deadline) {
+      penalizeRound("Monica: “Time’s up! We took a hit!”");
+    }
+    return;
+  }
+  c.t++;
   if (c.t >= 6 && c.t < 28) { const p = spellPos(c.t, EX); parts.push({ x: p.x, y: p.y, vx: -1 + Math.random() * 2, vy: Math.random() * 2 - 1, life: 22, c: cur().sc }); }
   if (c.t == 28) { B.left--; B.e.shake = 16; (c.fin ? SFX.win : SFX.hit)(); burst(EX - 40, GY - 95, cur().sc); burst(EX - 40, GY - 95, "#fff"); }
   if (c.t >= (c.fin ? 80 : 50)) { B.cast = null; if (c.fin) winFight(); else ask(1); }
 }
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && S == "battle" && B && !B.cast && B.deadline && Date.now() >= B.deadline) {
+    penalizeRound("Monica: “Time ran out while away! We took a hit!”");
+  }
+});
 function update() {
   if (paused) return;
   if (invuln > 0) invuln--;
@@ -1290,7 +1780,7 @@ function update() {
   if (P.x > PORTAL_X - 55) {
     if (enemies[enemies.length - 1].dead) {
       SFX.portal();
-      if (WI < 4) say([["Spellbook", W[WI].out], ["Monica", "Another portal. I just wanted a nap."]], () => { save.w = WI + 1; save.hp = P.hp; delete save.bx; delete save.bd; save.coins = save.isAdmin ? 99999 : P.coins; store(); load(WI + 1, false, true); });
+      if (WI < 4) say([["Spellbook", W[WI].out], ["Monica", "Another portal. I just wanted a nap."]], () => { save.w = WI + 1; save.hp = P.hp; delete save.bx; delete save.bd; if (save.fountains) delete save.fountains[WI + 1]; save.coins = save.isAdmin ? 99999 : P.coins; store(); load(WI + 1, false, true); });
       else finish();
       return;
     }
@@ -1300,7 +1790,249 @@ function update() {
 }
 
 /* ---------- drawing ---------- */
+function drawPixelHeart(cx, cy, filled, px) {
+  px = px || 2.1;
+  const grid = [
+    [0,0,1,1,1,0,0,0,1,1,1,0,0],
+    [0,1,2,2,2,1,0,1,2,2,2,1,0],
+    [1,2,3,3,2,2,1,2,2,2,2,2,1],
+    [1,2,3,2,2,2,2,2,2,2,2,2,1],
+    [1,2,2,2,2,2,2,2,2,2,2,2,1],
+    [1,2,3,2,2,2,2,2,2,2,2,2,1],
+    [0,1,2,2,2,2,2,2,2,2,2,1,0],
+    [0,0,1,2,2,2,2,2,2,2,1,0,0],
+    [0,0,0,1,4,2,2,2,4,1,0,0,0],
+    [0,0,0,0,1,4,2,4,1,0,0,0,0],
+    [0,0,0,0,0,1,1,1,0,0,0,0,0]
+  ];
+  const w = 13 * px, h = 11 * px;
+  const x0 = cx - w / 2, y0 = cy - h / 2;
+  X.save();
+  for (let r = 0; r < 11; r++) {
+    for (let c = 0; c < 13; c++) {
+      const v = grid[r][c];
+      if (!v) continue;
+      if (v === 1) X.fillStyle = "#181024";
+      else if (!filled) X.fillStyle = "rgba(255,255,255,0.22)";
+      else if (v === 2) X.fillStyle = "#e83b3b";
+      else if (v === 3) X.fillStyle = "#ffffff";
+      else if (v === 4) X.fillStyle = "#9e1c24";
+      X.fillRect(Math.round(x0 + c * px), Math.round(y0 + r * px), Math.ceil(px), Math.ceil(px));
+    }
+  }
+  X.restore();
+}
+
+function drawHeartsRow(x, y, hp, max, px) {
+  px = px || 2.2;
+  const step = 13 * px + 6;
+  for (let i = 0; i < max; i++) {
+    drawPixelHeart(x + i * step + (13 * px) / 2, y, i < hp, px);
+  }
+}
+
 function glow(c, b) { X.shadowColor = c; X.shadowBlur = b * K; }
+function drawCustomCloakLayer(ctx, cloakId, opts) {
+  opts = opts || {};
+  const t = opts.t || 0;
+  const bob = opts.bob || 0;
+  const sway = opts.sway || 0;
+  const lift = opts.lift || 0;
+  const hemY = opts.hemY != null ? opts.hemY : (-3 - bob * 0.5);
+  const mini = !!opts.mini;
+
+  ctx.save();
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  if (cloakId === "c1") {
+    const flk = Math.sin(t * 0.35) * 2.2;
+    const flk2 = Math.cos(t * 0.48) * 1.8;
+
+    // Back ember tail & rising flame tongues
+    glow("#ff5a14", mini ? 10 : 18);
+    const tailGrad = ctx.createLinearGradient(-16, -24 - bob, -4, 4 + lift);
+    tailGrad.addColorStop(0, "#5e1512");
+    tailGrad.addColorStop(0.55, "#c92a18");
+    tailGrad.addColorStop(1, "#ff9e1b");
+    ctx.fillStyle = tailGrad;
+    ctx.strokeStyle = "#2b0908";
+    ctx.lineWidth = mini ? 1.3 : 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-2, -23 - bob);
+    ctx.quadraticCurveTo(-11 - sway * 0.55, -15 - bob, -15 - sway, -2 + lift);
+    ctx.lineTo(-10 - sway * 0.7, -8 + lift);
+    ctx.lineTo(-7 - sway * 0.45, 2 + lift);
+    ctx.lineTo(-2, -4 - bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Main molten cloak with jagged flame hem
+    const bodyGrad = ctx.createLinearGradient(0, -24 - bob, 0, hemY + 6);
+    bodyGrad.addColorStop(0, "#6e1614");
+    bodyGrad.addColorStop(0.45, "#d6281c");
+    bodyGrad.addColorStop(0.85, "#ff7714");
+    bodyGrad.addColorStop(1, "#ffd24c");
+    ctx.fillStyle = bodyGrad;
+    ctx.strokeStyle = "#2b0908";
+    ctx.lineWidth = mini ? 1.4 : 1.7;
+
+    ctx.beginPath();
+    ctx.moveTo(-7.5, -22 - bob);
+    ctx.lineTo(8.5, -22 - bob);
+    ctx.lineTo(12, hemY - 1);
+    ctx.lineTo(8.5, hemY + 4 + flk * 0.5);
+    ctx.lineTo(5.2, hemY - 1.5);
+    ctx.lineTo(1.8, hemY + 5 - flk2 * 0.5);
+    ctx.lineTo(-1.8, hemY - 1);
+    ctx.lineTo(-5.5, hemY + 4.5 + flk * 0.4);
+    ctx.lineTo(-8.2, hemY - 1.5);
+    ctx.lineTo(-11, hemY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Glowing magma veins along the cloak
+    ctx.strokeStyle = "#ffbe3b";
+    ctx.lineWidth = mini ? 1.1 : 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-4, -17 - bob);
+    ctx.lineTo(-6, -10 - bob * 0.6);
+    ctx.lineTo(-3, hemY - 2);
+    ctx.moveTo(4, -17 - bob);
+    ctx.lineTo(6, -11 - bob * 0.6);
+    ctx.lineTo(4.5, hemY - 2);
+    ctx.stroke();
+
+    // Molten gold collar & blazing sun-ember clasp
+    ctx.fillStyle = "#4d1112";
+    ctx.strokeStyle = "#2b0908";
+    ctx.lineWidth = mini ? 1.2 : 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-9.5, -22 - bob);
+    ctx.quadraticCurveTo(0, -15.5 - bob, 10.5, -21 - bob);
+    ctx.lineTo(8.5, -25 - bob);
+    ctx.lineTo(-7.5, -25 - bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    glow("#ffae19", mini ? 8 : 13);
+    ctx.fillStyle = "#ffe259";
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI) / 4 + t * 0.05;
+      const r = i % 2 === 0 ? (mini ? 3.4 : 4.3) : (mini ? 1.6 : 2.1);
+      const px = 4 + Math.cos(a) * r;
+      const py = -20.5 - bob + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  } else if (cloakId === "c2") {
+    const shim = Math.sin(t * 0.22) * 1.4;
+
+    // Glacial tail with crisp crystal facet
+    glow("#7de3ff", mini ? 10 : 18);
+    const tailGrad = ctx.createLinearGradient(-15, -23 - bob, -2, 3 + lift);
+    tailGrad.addColorStop(0, "#1d5fa8");
+    tailGrad.addColorStop(0.6, "#4da8eb");
+    tailGrad.addColorStop(1, "#c9f2ff");
+    ctx.fillStyle = tailGrad;
+    ctx.strokeStyle = "#16335c";
+    ctx.lineWidth = mini ? 1.3 : 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-2, -23 - bob);
+    ctx.quadraticCurveTo(-10 - sway * 0.5, -14 - bob, -14 - sway, -3 + lift);
+    ctx.lineTo(-8 - sway * 0.6, 2 + lift);
+    ctx.lineTo(-2, -4 - bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Frost cloak with crystalline icicle points along the hem
+    const bodyGrad = ctx.createLinearGradient(0, -24 - bob, 0, hemY + 6);
+    bodyGrad.addColorStop(0, "#1f5da3");
+    bodyGrad.addColorStop(0.5, "#4ba6eb");
+    bodyGrad.addColorStop(1, "#d9f7ff");
+    ctx.fillStyle = bodyGrad;
+    ctx.strokeStyle = "#16335c";
+    ctx.lineWidth = mini ? 1.4 : 1.7;
+
+    ctx.beginPath();
+    ctx.moveTo(-7.5, -22 - bob);
+    ctx.lineTo(8.5, -22 - bob);
+    ctx.lineTo(11.5, hemY - 1);
+    ctx.lineTo(8.5, hemY + 5);
+    ctx.lineTo(5.2, hemY - 1);
+    ctx.lineTo(1.5, hemY + 6);
+    ctx.lineTo(-2.2, hemY - 1);
+    ctx.lineTo(-5.8, hemY + 5);
+    ctx.lineTo(-8.8, hemY - 1);
+    ctx.lineTo(-10.8, hemY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Frosty silver-white trim & crystal facets
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = mini ? 1.2 : 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-9.5, hemY - 1.5);
+    ctx.lineTo(-5.8, hemY + 3.5);
+    ctx.lineTo(-2.2, hemY - 1.5);
+    ctx.lineTo(1.5, hemY + 4.2);
+    ctx.lineTo(5.2, hemY - 1.5);
+    ctx.lineTo(8.5, hemY + 3.2);
+    ctx.lineTo(10.5, hemY - 1.5);
+    ctx.stroke();
+
+    // Diamond frost pattern on cloak
+    ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
+    ctx.beginPath();
+    ctx.moveTo(0, -15 - bob);
+    ctx.lineTo(3.5, -11 - bob * 0.7);
+    ctx.lineTo(0, -7 - bob * 0.5);
+    ctx.lineTo(-3.5, -11 - bob * 0.7);
+    ctx.closePath();
+    ctx.fill();
+
+    // Ice mantle & snowflake/crystal brooch
+    ctx.fillStyle = "#2b74c2";
+    ctx.strokeStyle = "#16335c";
+    ctx.lineWidth = mini ? 1.2 : 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-9.5, -22 - bob);
+    ctx.quadraticCurveTo(0, -16 - bob, 10.5, -21 - bob);
+    ctx.lineTo(8.5, -25 - bob);
+    ctx.lineTo(-7.5, -25 - bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    glow("#9fe7ff", mini ? 8 : 14);
+    ctx.fillStyle = "#e8fbff";
+    ctx.strokeStyle = "#2b74c2";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(4, -24 - bob + shim * 0.25);
+    ctx.lineTo(7.2, -20.5 - bob);
+    ctx.lineTo(4, -17 - bob - shim * 0.25);
+    ctx.lineTo(0.8, -20.5 - bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  ctx.restore();
+}
+
 function monica(x, y, f, o) {
   o = o || {};
   const ck = cur(), ab = ck.ab, sit = o.sit;
@@ -1352,17 +2084,19 @@ function monica(x, y, f, o) {
 
   const sway = sit ? 2 : (mv ? 9 + Math.sin(tt / 4) * 3 : 4) + (air ? (P.vy > 0 ? 12 : 6) : 0);
   const lift = air ? (P.vy > 0 ? -Math.min(12, P.vy * 1.8) : 3) : 0;
-  glow(ck.c, 8);
-  X.fillStyle = ck.c;
-  X.strokeStyle = out;
-  X.lineWidth = 1.5;
-  X.beginPath();
-  X.moveTo(-2, -23 - bob);
-  X.quadraticCurveTo(-10 - sway * .5, -14 - bob, -13 - sway, -3 + lift);
-  X.quadraticCurveTo(-7 - sway * .5, 1 + lift, -2, -4 - bob);
-  X.closePath();
-  X.fill();
-  X.stroke();
+  if (save.cloak !== "c1" && save.cloak !== "c2") {
+    glow(ck.c, 8);
+    X.fillStyle = ck.c;
+    X.strokeStyle = out;
+    X.lineWidth = 1.5;
+    X.beginPath();
+    X.moveTo(-2, -23 - bob);
+    X.quadraticCurveTo(-10 - sway * .5, -14 - bob, -13 - sway, -3 + lift);
+    X.quadraticCurveTo(-7 - sway * .5, 1 + lift, -2, -4 - bob);
+    X.closePath();
+    X.fill();
+    X.stroke();
+  }
 
   glow("#e6d8ff", 10);
   X.fillStyle = fur;
@@ -1421,49 +2155,53 @@ function monica(x, y, f, o) {
   }
 
   const hemY = -3 - bob * .5 + (air ? -1.5 : 0);
-  glow(ck.c, 6);
-  X.fillStyle = ck.c;
-  X.strokeStyle = out;
-  X.lineWidth = 1.6;
-  X.beginPath();
-  X.moveTo(-7, -22 - bob);
-  X.lineTo(8, -22 - bob);
-  X.lineTo(11, hemY);
-  X.quadraticCurveTo(5.5, hemY + 3, 0, hemY);
-  X.quadraticCurveTo(-5.5, hemY + 3, -10, hemY);
-  X.closePath();
-  X.fill();
-  X.stroke();
+  if (save.cloak === "c1" || save.cloak === "c2") {
+    drawCustomCloakLayer(X, save.cloak, { t: tt, bob, sway, lift, hemY, mini: false });
+  } else {
+    glow(ck.c, 6);
+    X.fillStyle = ck.c;
+    X.strokeStyle = out;
+    X.lineWidth = 1.6;
+    X.beginPath();
+    X.moveTo(-7, -22 - bob);
+    X.lineTo(8, -22 - bob);
+    X.lineTo(11, hemY);
+    X.quadraticCurveTo(5.5, hemY + 3, 0, hemY);
+    X.quadraticCurveTo(-5.5, hemY + 3, -10, hemY);
+    X.closePath();
+    X.fill();
+    X.stroke();
 
-  X.strokeStyle = ck.t;
-  X.lineWidth = 1.6;
-  X.beginPath();
-  X.moveTo(-9.5, hemY - 1.5);
-  X.quadraticCurveTo(-5.5, hemY + 1.5, 0, hemY - 1.5);
-  X.quadraticCurveTo(5.5, hemY + 1.5, 10.5, hemY - 1.5);
-  X.stroke();
+    X.strokeStyle = ck.t;
+    X.lineWidth = 1.6;
+    X.beginPath();
+    X.moveTo(-9.5, hemY - 1.5);
+    X.quadraticCurveTo(-5.5, hemY + 1.5, 0, hemY - 1.5);
+    X.quadraticCurveTo(5.5, hemY + 1.5, 10.5, hemY - 1.5);
+    X.stroke();
 
-  X.fillStyle = ck.c;
-  X.strokeStyle = out;
-  X.lineWidth = 1.5;
-  X.beginPath();
-  X.moveTo(-9, -22 - bob);
-  X.quadraticCurveTo(0, -16 - bob, 10, -21 - bob);
-  X.lineTo(8, -24.5 - bob);
-  X.lineTo(-7, -24.5 - bob);
-  X.closePath();
-  X.fill();
-  X.stroke();
+    X.fillStyle = ck.c;
+    X.strokeStyle = out;
+    X.lineWidth = 1.5;
+    X.beginPath();
+    X.moveTo(-9, -22 - bob);
+    X.quadraticCurveTo(0, -16 - bob, 10, -21 - bob);
+    X.lineTo(8, -24.5 - bob);
+    X.lineTo(-7, -24.5 - bob);
+    X.closePath();
+    X.fill();
+    X.stroke();
 
-  glow("#ffd84d", 8);
-  X.fillStyle = "#ffd84d";
-  X.strokeStyle = out;
-  X.lineWidth = 1.1;
-  X.beginPath();
-  X.arc(4, -21 - bob, 2.5, 0, 7);
-  X.fill();
-  X.stroke();
-  X.shadowBlur = 0;
+    glow("#ffd84d", 8);
+    X.fillStyle = "#ffd84d";
+    X.strokeStyle = out;
+    X.lineWidth = 1.1;
+    X.beginPath();
+    X.arc(4, -21 - bob, 2.5, 0, 7);
+    X.fill();
+    X.stroke();
+    X.shadowBlur = 0;
+  }
 
   const hx = 7 + c * 13 + (1 - c) * 2;
   const hyy = -15 - bob - c * 11 + (1 - c) * 3;
@@ -1568,12 +2306,135 @@ function monica(x, y, f, o) {
   X.restore();
   X.shadowBlur = 0;
 }
+function drawSpellbook3D(ctx, cx, cy, skinId, t, sc) {
+  const k = BK[skinId] || BK.b0;
+  sc = sc || 1;
+  const isRainbow = k.c === "rainbow";
+  const hue = (t * 3) % 360;
+  const coverCol = isRainbow ? "hsl(" + hue + ",82%,56%)" : k.c;
+  const backCol = isRainbow ? "hsl(" + ((hue + 35) % 360) + ",72%,36%)" : "#25143d";
+  const trimCol = k.trim || "#ffd86b";
+  const gemCol = isRainbow ? "hsl(" + ((hue + 180) % 360) + ",95%,75%)" : (k.gem || "#9fe7ff");
+  const tilt = Math.sin(t / 18) * 0.08 - 0.14;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(sc, sc);
+  ctx.rotate(tilt);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  ctx.shadowColor = isRainbow ? coverCol : gemCol;
+  ctx.shadowBlur = 12;
+
+  ctx.fillStyle = backCol;
+  ctx.strokeStyle = "#1a0d2e";
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.roundRect(-13, -10, 26, 21, 3);
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = "#f7eed7";
+  ctx.beginPath();
+  ctx.moveTo(-10, -11);
+  ctx.lineTo(13, -12);
+  ctx.lineTo(15, 8);
+  ctx.lineTo(-10, 9);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = "#cbb894";
+  ctx.lineWidth = 0.9;
+  ctx.beginPath();
+  ctx.moveTo(-8, -9); ctx.lineTo(12, -10);
+  ctx.moveTo(-8, 6.5); ctx.lineTo(13, 6);
+  ctx.moveTo(12.5, -10); ctx.lineTo(14, 6);
+  ctx.stroke();
+
+  ctx.fillStyle = "#ff4f79";
+  ctx.beginPath();
+  ctx.moveTo(2, 8);
+  ctx.lineTo(5, 15);
+  ctx.lineTo(2.5, 13);
+  ctx.lineTo(0, 15);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = coverCol;
+  ctx.strokeStyle = "#1d0f33";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-13, -12);
+  ctx.lineTo(10, -13.5);
+  ctx.quadraticCurveTo(12.5, -13.5, 12.5, -11);
+  ctx.lineTo(12.5, 6);
+  ctx.quadraticCurveTo(12.5, 8.5, 10, 8.5);
+  ctx.lineTo(-13, 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(0,0,0,0.26)";
+  ctx.fillRect(-13, -12, 4.5, 22);
+  ctx.fillStyle = trimCol;
+  ctx.fillRect(-13, -8, 4.5, 1.8);
+  ctx.fillRect(-13, 4, 4.5, 1.8);
+
+  ctx.strokeStyle = trimCol;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(5, -12.8); ctx.lineTo(11.2, -12.8); ctx.lineTo(11.2, -7);
+  ctx.moveTo(5, 7.8); ctx.lineTo(11.2, 7.8); ctx.lineTo(11.2, 2);
+  ctx.stroke();
+
+  if (skinId === "b2") {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(-4, -7, 1.8, 1.8);
+    ctx.fillRect(6, -4, 1.6, 1.6);
+    ctx.fillRect(-5, 3, 1.5, 1.5);
+    ctx.fillRect(5, 3, 1.8, 1.8);
+  } else if (skinId === "b1") {
+    ctx.strokeStyle = "#fff7c2";
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.arc(1.5, -2.5, 6.2, 0, 7);
+    ctx.stroke();
+  }
+
+  ctx.shadowColor = gemCol;
+  ctx.shadowBlur = 8;
+  ctx.fillStyle = gemCol;
+  ctx.beginPath();
+  ctx.moveTo(1.5, -7);
+  ctx.lineTo(5.5, -2.5);
+  ctx.lineTo(1.5, 2);
+  ctx.lineTo(-2.5, -2.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(0.5, -3.5, 1.1, 0, 7);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function book(x, y) {
-  const b = Math.sin(tt / 20) * 4, k = BK[save.skin] || BK.b0; glow("#ffd27a", 12);
-  X.fillStyle = k.c == "rainbow" ? "hsl(" + (tt * 3 % 360) + ",85%,60%)" : k.c; X.fillRect(x, y + b, 18, 13);
-  X.fillStyle = "#fff"; X.fillRect(x + 2, y + b + 2, 14, 2);
-  if (k.c == "#4b2aa8") { X.fillStyle = "#fff"; X.fillRect(x + 12, y + b + 7, 2, 2); X.fillRect(x + 4, y + b + 9, 2, 2); }
-  X.shadowBlur = 0;
+  const bob = Math.sin(tt / 18) * 4.5;
+  const k = BK[save.skin] || BK.b0;
+  if (tt % 14 === 0) {
+    parts.push({
+      x: x + 9 + rnd(-10, 10),
+      y: y + 6 + bob + rnd(-8, 8),
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: -0.5 - Math.random() * 0.6,
+      life: 24,
+      c: k.c === "rainbow" ? "hsl(" + ((tt * 4) % 360) + ",90%,70%)" : (k.gem || "#ffd86b")
+    });
+  }
+  drawSpellbook3D(X, x + 9, y + 6 + bob, save.skin || "b0", tt, 1.08);
 }
 function bench(x, front, s) {
   s = s == null ? WI : s;
@@ -2732,7 +3593,56 @@ function drawPlatform(p, w) {
   X.shadowBlur = 0;
 }
 
-/* ---------- Upgraded Dimensional Portal ---------- */
+/* ---------- Heart Restore Fountain (Chapters 2–5, early entry area) ---------- */
+function drawFountain(x, claimed) {
+  X.save();
+  X.translate(x, GY);
+  X.lineJoin = "round";
+  X.lineCap = "round";
+
+  X.fillStyle = "#484266";
+  X.strokeStyle = "#1c1630";
+  X.lineWidth = 2.2;
+  X.beginPath();
+  X.roundRect(-38, -14, 76, 14, 5);
+  X.roundRect(-30, -28, 60, 16, 6);
+  X.fill();
+  X.stroke();
+
+  X.fillStyle = "#5c5480";
+  X.beginPath();
+  X.roundRect(-10, -54, 20, 28, 4);
+  X.roundRect(-20, -62, 40, 10, 5);
+  X.fill();
+  X.stroke();
+
+  if (!claimed) {
+    glow("#ff5c8a", 18);
+    X.fillStyle = "#ff6b96";
+    X.fillRect(-26, -31, 52, 5);
+    X.fillRect(-16, -65, 32, 4);
+
+    X.strokeStyle = "rgba(255, 160, 195, .85)";
+    X.lineWidth = 2.5;
+    const wave = Math.sin(tt / 8) * 2;
+    X.beginPath();
+    X.moveTo(-14, -62); X.quadraticCurveTo(-22 - wave, -46, -22, -29);
+    X.moveTo(14, -62); X.quadraticCurveTo(22 + wave, -46, 22, -29);
+    X.stroke();
+
+    const bob = Math.sin(tt / 12) * 4;
+    drawPixelHeart(0, -84 + bob, true, 2.2);
+    X.shadowBlur = 0;
+  } else {
+    X.fillStyle = "#2d2842";
+    X.fillRect(-26, -30, 52, 4);
+    drawPixelHeart(0, -80, false, 2.0);
+  }
+
+  X.restore();
+  X.shadowBlur = 0;
+}
+
 function drawPortal(x, w, unlocked) {
   const cy = GY - 72;
   X.save();
@@ -3194,7 +4104,15 @@ function panel(x, y, name, fr, col) {
 }
 function drawBattle() {
   const w = W[WI], e = B.e, c = B.cast, ck = cur();
-  X.save(); X.translate(0, -140); bg(w);
+  const prevCam = cam;
+  cam = 0;
+  X.save();
+  X.beginPath();
+  X.rect(0, 0, 800, 272);
+  X.clip();
+  X.save();
+  X.translate(0, -118);
+  bg(w);
   ground(w);
   X.fillStyle = "rgba(0,0,0,.3)"; X.beginPath(); X.ellipse(170, GY + 4, 85, 12, 0, 0, 7); X.ellipse(EX, GY + 4, e.boss ? 130 : 90, 15, 0, 0, 7); X.fill();
   const ap = Math.min(1, B.age / 30), dy = c && c.fin && c.t > 28 ? Math.max(0, 1 - (c.t - 28) / 50) : 1, lx = B.lunge > 0 ? -Math.sin(B.lunge / 22 * Math.PI) * 130 : 0, sc = (e.boss ? 1.3 : 1.7) * (.7 + .3 * ap);
@@ -3206,9 +4124,61 @@ function drawBattle() {
   monica(120 + hurt, GY - 40 * 1.0 - 28, 1, { s: 1.7, cast: c ? (c.t < 34 ? Math.min(1, c.t / 6) : Math.max(0, 1 - (c.t - 34) / 10)) : 0 }); book(70, GY - 150);
   if (c && c.t < 30) { const p = spellPos(c.t, EX); if (c.t < 6) spellDraw(ck.sp, ck.sc, 205, GY - 100, tt, .4 + c.t / 10); else spellDraw(ck.sp, ck.sc, p.x, p.y, tt, 1.2); }
   for (const p of parts) { X.globalAlpha = Math.min(1, p.life / 30); X.fillStyle = p.c; X.fillRect(p.x, p.y, 5, 5); }
-  X.globalAlpha = 1; X.restore();
-  panel(20, 12, "Monica (" + "♥".repeat(P.hp) + "♡".repeat(P.max - P.hp) + ")", B.strikes / 3, "#ff4f86");
+  X.globalAlpha = 1;
+  X.restore();
+  X.restore();
+  X.fillStyle = w.soil || "#5c3b24";
+  X.fillRect(0, 272, 800, 178);
+  cam = prevCam;
+  panel(20, 12, "Monica", B.strikes / 3, "#ff4f86");
   panel(530, 12, e.n, B.left / e.q, B.left / e.q > .4 ? "#4adf6a" : "#ff4a4a");
+
+  const remMs = B.cast ? Math.max(0, B.deadline - Date.now()) : Math.max(0, (B.deadline || Date.now()) - Date.now());
+  const totSec = Math.ceil(remMs / 1000);
+  const mins = Math.floor(totSec / 60);
+  const secs = String(totSec % 60).padStart(2, "0");
+  const frac = B.turnDur ? Math.max(0, Math.min(1, remMs / B.turnDur)) : 1;
+  const low = totSec <= 10;
+
+  X.save();
+  X.fillStyle = "rgba(20,12,40,.84)";
+  X.strokeStyle = low ? "#ff4a4a" : "#c98ae6";
+  X.lineWidth = 2;
+  X.beginPath();
+  X.roundRect(330, 12, 140, 56, 12);
+  X.fill();
+  X.stroke();
+
+  X.textAlign = "center";
+  X.fillStyle = "#d9c2ff";
+  X.font = "bold 11px " + FONT;
+  X.fillText("TIME LEFT", 400, 27);
+
+  X.fillStyle = low ? "#ff6b6b" : "#ffffff";
+  X.font = "bold 20px " + FONT;
+  X.fillText(mins + ":" + secs, 400, 47);
+
+  X.fillStyle = "#333";
+  X.fillRect(342, 53, 116, 7);
+  X.fillStyle = low ? "#ff4a4a" : (frac > .35 ? "#5ce1ff" : "#ffb020");
+  X.fillRect(342, 53, 116 * frac, 7);
+
+  if (e.boss) {
+    glow("#ff2a55", 14);
+    X.fillStyle = "rgba(65, 8, 22, .9)";
+    X.strokeStyle = "#ff4a6e";
+    X.lineWidth = 1.6;
+    X.beginPath();
+    X.roundRect(342, 73, 116, 22, 7);
+    X.fill();
+    X.stroke();
+    X.fillStyle = "#ff4f73";
+    X.font = "bold 12px " + FONT;
+    X.fillText("BOSS FIGHT", 400, 88);
+    X.shadowBlur = 0;
+  }
+  X.textAlign = "left";
+  X.restore();
   if (e.boss) {
     const g = X.createRadialGradient(400, 225, 180, 400, 225, 470); g.addColorStop(0, "rgba(120,0,20,0)"); g.addColorStop(1, "rgba(120,0,20," + (.28 + .1 * Math.sin(tt / 12)) + ")");
     X.fillStyle = g; X.fillRect(0, 0, 800, 450);
@@ -3226,22 +4196,99 @@ function drawWorld() {
   X.save(); X.translate(-Math.round(cam), 0);
   for (let x = 150, i = 0; x < LW; x += 240, i++) deco(w, x, i);
   for (const c of coins) if (!c.got) { glow("#ffd84d", 12); X.fillStyle = "#ffd84d"; X.beginPath(); X.ellipse(c.x, c.y + Math.sin(tt / 15 + c.x) * 3, 7 * Math.abs(Math.cos(tt / 20 + c.x) * .6 + .4), 8, 0, 0, 7); X.fill(); X.shadowBlur = 0; }
-  enemies.forEach(e => { if (!e.dead) { X.save(); X.translate(e.x, GY); if (e.boss) bossDraw(e); else enemy(e); X.restore(); } });
+  if (WI >= 1) {
+    const fClaimed = !!(save.fountains && save.fountains[WI]);
+    drawFountain(FOUNTAIN_X, fClaimed);
+    if (S == "play") {
+      const nearF = Math.abs(P.x + 14 - FOUNTAIN_X) < 65;
+      const bobF = Math.sin(tt / 12) * 3;
+      X.save();
+      X.textAlign = "center";
+      X.lineJoin = "round";
+      if (!fClaimed) {
+        X.font = "bold 14px " + FONT;
+        glow("#ff4f86", 12);
+        X.strokeStyle = "#260818";
+        X.lineWidth = 4;
+        const fLabel = nearF ? "PRESS E · RESTORE 3 HEARTS" : "HEART FOUNTAIN";
+        X.strokeText(fLabel, FOUNTAIN_X, GY - 108 + bobF);
+        X.fillStyle = nearF ? "#ffe600" : "#ff85ad";
+        X.fillText(fLabel, FOUNTAIN_X, GY - 108 + bobF);
+      } else if (nearF) {
+        X.font = "bold 13px " + FONT;
+        X.strokeStyle = "#1b0d2e";
+        X.lineWidth = 3.5;
+        X.strokeText("FOUNTAIN CLAIMED (CH." + (WI + 1) + ")", FOUNTAIN_X, GY - 105);
+        X.fillStyle = "#b8a9d9";
+        X.fillText("FOUNTAIN CLAIMED (CH." + (WI + 1) + ")", FOUNTAIN_X, GY - 105);
+      }
+      X.restore();
+      X.shadowBlur = 0;
+    }
+  }
+  enemies.forEach(e => {
+    if (!e.dead) {
+      X.save();
+      X.translate(e.x, GY);
+      if (e.boss) {
+        bossDraw(e);
+        const bobB = Math.sin(tt / 11) * 4;
+        X.textAlign = "center";
+        X.lineJoin = "round";
+        X.font = "bold 20px " + FONT;
+        glow("#ff1e42", 16);
+        X.strokeStyle = "#24040c";
+        X.lineWidth = 4.5;
+        X.strokeText("BOSS", 0, -212 + bobB);
+        X.fillStyle = "#ff3856";
+        X.fillText("BOSS", 0, -212 + bobB);
+        X.shadowBlur = 0;
+      } else {
+        enemy(e);
+      }
+      X.restore();
+    }
+  });
   const bd = enemies[enemies.length - 1].dead;
   drawPortal(PORTAL_X, w, bd);
   drawFx();
   drawSpawnBeam();
   monica(P.x, inSit ? P.y - 20 : P.y, P.face, { sit: inSit }); book(P.x - P.face * 26, P.y - 8);
   if (inSit) bench(sitB.x, 1);
-  if (S == "play") {
-    for (const b of benches) if (Math.abs(P.x + 14 - b.x - 26) < 60) {
-      X.fillStyle = "#fff"; glow("#000", 6); X.font = "bold 15px " + FONT; X.fillText("Press E to sit (Save)", b.x - 22, GY - 80); X.shadowBlur = 0;
+  if (S == "play" || S == "sit") {
+    for (const b of benches) {
+      const near = Math.abs(P.x + 14 - b.x - 26) < 60;
+      const bob = Math.sin(tt / 12) * 3;
+      const cx = b.x + 26;
+      const ty = GY - 92 + bob;
+      X.save();
+      X.textAlign = "center";
+      X.lineJoin = "round";
+      if (!near && S == "play") {
+        X.font = "bold 16px " + FONT;
+        glow("#ff9a1a", 14);
+        X.strokeStyle = "#2b1600";
+        X.lineWidth = 4;
+        X.strokeText("CHECKPOINT", cx, ty);
+        X.fillStyle = "#ffe600";
+        X.fillText("CHECKPOINT", cx, ty);
+      } else if (S == "play") {
+        X.font = "bold 14px " + FONT;
+        glow("#000", 8);
+        X.strokeStyle = "#1b0d2e";
+        X.lineWidth = 4;
+        X.strokeText("PRESS E / SIT BUTTON", cx, ty);
+        X.fillStyle = "#ffe600";
+        X.fillText("PRESS E / SIT BUTTON", cx, ty);
+      }
+      X.restore();
+      X.shadowBlur = 0;
     }
   }
   for (const p of parts) { X.globalAlpha = Math.min(1, p.life / 45); X.fillStyle = p.c; X.fillRect(p.x, p.y, 5, 5); }
   X.globalAlpha = 1; X.restore(); fireflies(w.gl);
   drawProgressBar();
-  X.font = "bold 22px " + FONT; X.fillStyle = "#ff4f86"; glow("#000", 4); X.fillText("♥".repeat(P.hp) + "♡".repeat(P.max - P.hp), 18, 152);
+  drawHeartsRow(18, 144, P.hp, P.max, 2.2);
   X.font = "bold 12px " + FONT; X.fillStyle = "#fff"; X.textAlign = "right"; X.fillText("Chapter " + (WI + 1) + " · " + w.n, 788, 26); X.textAlign = "left"; X.shadowBlur = 0;
   if (S == "sit" && !paused) bubble(P.x - cam + 14, P.y - 62, sitT < 50 ? "Saving checkpoint…" : "Checkpoint saved! S: shop · E: stand");
   if (titleT > 0) {
@@ -3254,15 +4301,23 @@ function drawWorld() {
     X.font = "18px " + FONT; X.fillText("Monica: “Taking a break? We literally just started.”", 400, 210); X.textAlign = "left";
   }
 }
-let lastT = 0;
+let lastT = 0, accT = 0;
+const STEP_MS = 1000 / 60;
 function loop(now) {
   requestAnimationFrame(loop);
-  if (!lastT) lastT = now;
-  if (now - lastT < 15.5) return;
-  lastT = now - (now - lastT) % 16.666;
+  if (!lastT) { lastT = now; return; }
+  const dt = Math.min(now - lastT, 100);
+  lastT = now;
+  accT += dt;
+  if (accT < STEP_MS * 0.92) return;
+  const steps = Math.min(2, Math.floor(accT / STEP_MS));
+  accT -= steps * STEP_MS;
+  for (let i = 0; i < steps; i++) {
+    tt++;
+    update();
+  }
   X.setTransform(K, 0, 0, K, 0, 0);
-  if (wrap.dataset.s != S) { wrap.dataset.s = S; ensureAdminUI(); }
-  tt++; update();
+  if (wrap.dataset.s != S) { wrap.dataset.s = S; ensureAdminUI(); updateDevsBtnVisibility(); }
   const sv = S == "sit" && sitT >= 50 && !paused; if (sv != shopVis) { shopVis = sv; $("shopS").hidden = !sv; }
   if (S == "title" || S == "login" || (S == "shop" && shopFrom == "title")) drawTitle();
   else if (introOn) drawIntro();
