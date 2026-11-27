@@ -408,258 +408,6 @@ function ensureReplayGuideUI() {
   if (tip) tip.hidden = $("new").hidden || !replayGuideOpen;
 }
 
-/* ---------- Devs / Creators (Group 7) Bunny Doodle Modal ---------- */
-const GROUP_7_DEVS = [
-  { name: "Fernando", action: "coding bugs & fixing saves", activity: "code" },
-  { name: "Reshie", action: "sketching cute bunnies", activity: "draw" },
-  { name: "Patrick", action: "sipping iced coffee & testing", activity: "coffee" },
-  { name: "Lance", action: "writing calculus traps", activity: "math" },
-  { name: "Jerico", action: "chasing high scores", activity: "star" }
-];
-
-let devsAnimRaf = 0;
-
-function stopDevsAnim() {
-  if (devsAnimRaf) {
-    cancelAnimationFrame(devsAnimRaf);
-    devsAnimRaf = 0;
-  }
-}
-
-function drawBunnyDoodle(ctx, idx, activity, t) {
-  const w = ctx.width, h = ctx.height;
-  ctx.clearRect(0, 0, w, h);
-
-  const bob = Math.sin(t / 12 + idx * 1.4) * 2.5;
-  const earW = Math.sin(t / 16 + idx) * 0.14;
-  const cx = w / 2, cy = h * 0.62 + bob;
-
-  ctx.save();
-  ctx.lineJoin = "round";
-  ctx.lineCap = "round";
-
-  // Doodle background squiggles / stars
-  ctx.strokeStyle = "rgba(255, 216, 77, 0.25)";
-  ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  ctx.arc(16 + (idx * 7) % 14, 16, 3.5 + Math.sin(t / 14 + idx) * 1, 0, 7);
-  ctx.stroke();
-
-  // Bunny ears
-  const earTint = ["#ffe8f3", "#e8f4ff", "#fff4d4", "#efe6ff", "#e4fff2"][idx % 5];
-  for (const [ox, ang] of [[-7, -0.22], [7, 0.22]]) {
-    ctx.save();
-    ctx.translate(cx + ox, cy - 12);
-    ctx.rotate(ang + earW);
-    ctx.fillStyle = "#ffffff";
-    ctx.strokeStyle = "#2b1942";
-    ctx.lineWidth = 1.8;
-    ctx.beginPath();
-    ctx.ellipse(0, -10, 4.5, 11.5, 0, 0, 7);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = earTint;
-    ctx.beginPath();
-    ctx.ellipse(0, -10, 2.2, 7.5, 0, 0, 7);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // Bunny head
-  ctx.fillStyle = "#ffffff";
-  ctx.strokeStyle = "#2b1942";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, 14.5, 12.5, 0, 0, 7);
-  ctx.fill();
-  ctx.stroke();
-
-  // Cheeks
-  ctx.fillStyle = "rgba(255, 126, 182, 0.55)";
-  ctx.beginPath();
-  ctx.ellipse(cx - 8.5, cy + 3, 2.8, 1.7, 0, 0, 7);
-  ctx.ellipse(cx + 8.5, cy + 3, 2.8, 1.7, 0, 0, 7);
-  ctx.fill();
-
-  // Eyes & smile
-  ctx.fillStyle = "#2b1942";
-  ctx.beginPath();
-  ctx.arc(cx - 5, cy - 1.5, 2.1, 0, 7);
-  ctx.arc(cx + 5, cy - 1.5, 2.1, 0, 7);
-  ctx.fill();
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.arc(cx - 5.6, cy - 2.2, 0.8, 0, 7);
-  ctx.arc(cx + 4.4, cy - 2.2, 0.8, 0, 7);
-  ctx.fill();
-
-  ctx.strokeStyle = "#2b1942";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(cx, cy + 2.5, 3, 0.15 * Math.PI, 0.85 * Math.PI);
-  ctx.stroke();
-
-  // Doodle props showing random things each bunny is doing
-  if (activity === "code") {
-    ctx.fillStyle = "#5ce1ff";
-    ctx.strokeStyle = "#1b2845";
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.roundRect(cx - 10, cy + 9, 20, 11, 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#1b2845";
-    ctx.font = "bold 7px monospace";
-    ctx.fillText("</>", cx - 6.5, cy + 17);
-  } else if (activity === "draw") {
-    const tilt = Math.sin(t / 10) * 0.25;
-    ctx.save();
-    ctx.translate(cx + 13, cy + 10);
-    ctx.rotate(-0.5 + tilt);
-    ctx.fillStyle = "#ff7eb6";
-    ctx.strokeStyle = "#2b1942";
-    ctx.lineWidth = 1.3;
-    ctx.beginPath();
-    ctx.roundRect(-2, -10, 4.5, 13, 1.5);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#ffd84d";
-    ctx.beginPath();
-    ctx.moveTo(-2, 3); ctx.lineTo(2.5, 3); ctx.lineTo(0.25, 7);
-    ctx.fill();
-    ctx.restore();
-  } else if (activity === "coffee") {
-    ctx.fillStyle = "#b87344";
-    ctx.strokeStyle = "#2b1942";
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.roundRect(cx + 7, cy + 7, 10, 10, 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.strokeStyle = "rgba(255,255,255,0.75)";
-    ctx.lineWidth = 1.3;
-    const steam = Math.sin(t / 8) * 1.5;
-    ctx.beginPath();
-    ctx.moveTo(cx + 10, cy + 4); ctx.quadraticCurveTo(cx + 8 + steam, cy + 1, cx + 11, cy - 2);
-    ctx.moveTo(cx + 14, cy + 4); ctx.quadraticCurveTo(cx + 16 - steam, cy + 1, cx + 13, cy - 2);
-    ctx.stroke();
-  } else if (activity === "math") {
-    ctx.fillStyle = "#ffd84d";
-    ctx.font = "bold 11px Georgia,serif";
-    ctx.fillText("dy/dx", cx - 15, cy + 19 + Math.sin(t / 11) * 1.5);
-  } else {
-    ctx.fillStyle = "#ffd84d";
-    ctx.strokeStyle = "#2b1942";
-    ctx.lineWidth = 1.2;
-    const sy = cy + 13 + Math.cos(t / 9) * 2;
-    ctx.beginPath();
-    ctx.arc(cx + 12, sy, 4.5, 0, 7);
-    ctx.fill();
-    ctx.stroke();
-  }
-
-  ctx.restore();
-}
-
-function renderDevsDoodles() {
-  const box = $("devsBox");
-  if (!box || box.hidden) {
-    devsAnimRaf = 0;
-    return;
-  }
-  const t = performance.now() / 16.666;
-  box.querySelectorAll("canvas[data-dev-idx]").forEach(cv => {
-    const idx = parseInt(cv.dataset.devIdx, 10);
-    const dev = GROUP_7_DEVS[idx];
-    if (dev) drawBunnyDoodle(cv, idx, dev.activity, t);
-  });
-  devsAnimRaf = requestAnimationFrame(renderDevsDoodles);
-}
-
-function ensureDevsUI() {
-  let box = $("devsBox");
-  if (!box) {
-    box = document.createElement("div");
-    box.id = "devsBox";
-    box.hidden = true;
-    box.style.cssText =
-      "position:absolute;inset:0;z-index:58;display:none;flex-direction:column;align-items:center;justify-content:center;" +
-      "background:rgba(11,5,24,.86);backdrop-filter:blur(4px);color:#fff;font-family:" + FONT + ";text-align:center;padding:14px;";
-
-    const cards = GROUP_7_DEVS.map((d, i) =>
-      '<div style="width:124px;background:rgba(33,16,64,.95);border:1.5px solid #c98ae6;border-radius:14px;padding:8px 8px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 6px 16px rgba(0,0,0,.4);">' +
-        '<canvas data-dev-idx="' + i + '" width="72" height="64" style="width:72px;height:64px;border-radius:10px;background:rgba(16,8,34,.75);border:1px solid rgba(255,216,77,.3);"></canvas>' +
-        '<div style="font-weight:bold;font-size:13px;color:#ffd84d;line-height:1.15;">' + d.name + '</div>' +
-        '<div style="font-size:10.5px;color:#e8dcff;line-height:1.25;">' + d.action + '</div>' +
-      '</div>'
-    ).join("");
-
-    box.innerHTML =
-      '<div style="background:rgba(24,11,48,.96);border:2px solid #ff7eb6;border-radius:20px;padding:16px 20px;width:min(94%,700px);box-shadow:0 0 36px rgba(255,126,182,.35);">' +
-        '<div style="font:bold 22px Georgia,serif;color:#ffd84d;margin-bottom:2px;">Group 7 · Game Creators</div>' +
-        '<div style="font-size:12px;color:#9fe7ff;margin-bottom:12px;">Bunny doodle profiles of the devs</div>' +
-        '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-bottom:14px;">' + cards + '</div>' +
-        '<button type="button" id="devsCloseBtn" style="padding:7px 22px;border-radius:999px;border:1.5px solid rgba(255,255,255,.38);background:rgba(255,255,255,.12);color:#fff;font:bold 13px ' + FONT + ';cursor:pointer;">Back</button>' +
-      '</div>';
-
-    wrap.appendChild(box);
-    $("devsCloseBtn").onclick = closeDevsModal;
-  }
-
-  let btn = $("devsBtn");
-  if (!btn) {
-    btn = document.createElement("button");
-    btn.id = "devsBtn";
-    btn.type = "button";
-    btn.textContent = "Group 7 · Devs";
-    btn.title = "Meet the Creators (Group 7)";
-    btn.style.cssText =
-      "position:absolute;bottom:14px;left:16px;z-index:25;display:none;" +
-      "padding:8px 14px;border-radius:999px;border:1.5px solid #ffd84d;" +
-      "background:linear-gradient(135deg,rgba(45,19,86,.92),rgba(138,59,138,.92));" +
-      "color:#fff6d6;font:bold 13px " + FONT + ";cursor:pointer;" +
-      "box-shadow:0 4px 16px rgba(0,0,0,.45),0 0 12px rgba(255,216,77,.35);";
-    btn.onclick = openDevsModal;
-    wrap.appendChild(btn);
-  }
-}
-
-function updateDevsBtnVisibility() {
-  ensureDevsUI();
-  const btn = $("devsBtn");
-  if (!btn) return;
-  const show = !!(activeUser && S === "title" && !$("title").hidden);
-  btn.style.display = show ? "inline-flex" : "none";
-  if (!show) {
-    const box = $("devsBox");
-    if (box && !box.hidden) {
-      box.hidden = true;
-      box.style.display = "none";
-      stopDevsAnim();
-    }
-  }
-}
-
-function openDevsModal() {
-  ensureDevsUI();
-  const box = $("devsBox");
-  box.hidden = false;
-  box.style.display = "flex";
-  SFX.blip();
-  renderDevsDoodles();
-}
-
-function closeDevsModal() {
-  const box = $("devsBox");
-  if (box) {
-    box.hidden = true;
-    box.style.display = "none";
-  }
-  stopDevsAnim();
-  SFX.blip();
-}
-
 function updateTitleButtons() {
   const isCompleted = !!save.completed;
   if (isCompleted) {
@@ -682,8 +430,6 @@ function updateTitleButtons() {
   if (qBtn) qBtn.hidden = !isCompleted;
   if (tip) tip.hidden = !isCompleted || !replayGuideOpen;
 }
-  updateDevsBtnVisibility();
-}
 
 function loginSuccess(key, data) {
   activeUser = key;
@@ -695,7 +441,6 @@ function loginSuccess(key, data) {
   $("loginBox").hidden = true;
   $("title").hidden = false;
   updateTitleButtons();
-  updateDevsBtnVisibility();
   S = "title";
   idle = Date.now();
   ensureAdminUI();
@@ -771,7 +516,6 @@ $("exitAcc").onclick = () => {
   $("loginStep1").hidden = false;
   $("loginStep2").hidden = true;
   $("loginBox").hidden = false;
-  updateDevsBtnVisibility();
   S = "login"; cam = 0;
   setTimeout(() => $("nameIn").focus(), 30);
 };
@@ -1562,11 +1306,6 @@ $("ans").addEventListener("keydown", e => { if (e.key == "Enter") { e.preventDef
 const KM = { ArrowLeft: "left", a: "left", A: "left", ArrowRight: "right", d: "right", D: "right", " ": "jump" };
 addEventListener("keydown", e => {
   idle = Date.now(); sfxInit();
-  const devsModal = $("devsBox");
-  if (devsModal && !devsModal.hidden) {
-    if (e.key == "Escape") closeDevsModal();
-    return;
-  }
   const repBox = $("replayBox");
   if (repBox && !repBox.hidden) {
     if (e.key == "Escape") { repBox.hidden = true; repBox.style.display = "none"; }
@@ -4317,7 +4056,7 @@ function loop(now) {
     update();
   }
   X.setTransform(K, 0, 0, K, 0, 0);
-  if (wrap.dataset.s != S) { wrap.dataset.s = S; ensureAdminUI(); updateDevsBtnVisibility(); }
+  if (wrap.dataset.s != S) { wrap.dataset.s = S; ensureAdminUI(); }
   const sv = S == "sit" && sitT >= 50 && !paused; if (sv != shopVis) { shopVis = sv; $("shopS").hidden = !sv; }
   if (S == "title" || S == "login" || (S == "shop" && shopFrom == "title")) drawTitle();
   else if (introOn) drawIntro();
